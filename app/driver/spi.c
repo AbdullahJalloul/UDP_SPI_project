@@ -41,7 +41,7 @@ void ICACHE_FLASH_ATTR spi_master_init (void)
 	pin_func_select (PERIPHS_IO_MUX_MTCK_U, 2);//configure io13 to Hspi_mosi mode
 	pin_func_select (PERIPHS_IO_MUX_MTMS_U, 2);//configure io14 to Hspi_clk mode
 	pin_func_select (PERIPHS_IO_MUX_MTDO_U, 2);//configure io15 to Hspi_cs mode
-
+// использование регистров
 	SPI1->spi_user |= SPI_USER_CS_SETUP | SPI_USER_CS_HOLD | SPI_USER_COMMAND;
 	SPI1->spi_user &= ~SPI_USER_FLASH_MODE;
 	SPI1->spi_clock_bits.equ_sysclk = 0;
@@ -49,17 +49,16 @@ void ICACHE_FLASH_ATTR spi_master_init (void)
 	SPI1->spi_clock_bits.clkcnt_n = SPI_DIV_CLK_N;
 	SPI1->spi_clock_bits.clkcnt_h = SPI_DIV_CLK_H;
 	SPI1->spi_clock_bits.clkcnt_l = SPI_DIV_CLK_L;
+// использование макросов
+	SET_PERI_REG_MASK (SPI_USER (HSPI),
+			SPI_CS_SETUP | SPI_CS_HOLD | SPI_USR_COMMAND);
+	CLEAR_PERI_REG_MASK (SPI_USER (HSPI), SPI_FLASH_MODE);
+	WRITE_PERI_REG (SPI_CLOCK (HSPI),
+		((SPI_PREDIV_CLK & SPI_CLKDIV_PRE) << SPI_CLKDIV_PRE_S)
+			| ((SPI_DIV_CLK_N & SPI_CLKCNT_N) << SPI_CLKCNT_N_S)
+			| ((SPI_DIV_CLK_H & SPI_CLKCNT_H) << SPI_CLKCNT_H_S)
+			| ((SPI_DIV_CLK_L & SPI_CLKCNT_L) << SPI_CLKCNT_L_S));//clear bit 31, set SPI clock div
 
-	/*	SET_PERI_REG_MASK (SPI_USER (HSPI),
-	 SPI_CS_SETUP | SPI_CS_HOLD | SPI_USR_COMMAND);
-
-	 CLEAR_PERI_REG_MASK (SPI_USER (HSPI), SPI_FLASH_MODE);
-	 WRITE_PERI_REG (SPI_CLOCK (HSPI),
-	 ((SPI_PREDIV_CLK & SPI_CLKDIV_PRE) << SPI_CLKDIV_PRE_S)
-	 | ((SPI_DIV_CLK_N & SPI_CLKCNT_N) << SPI_CLKCNT_N_S)
-	 | ((SPI_DIV_CLK_H & SPI_CLKCNT_H) << SPI_CLKCNT_H_S)
-	 | ((SPI_DIV_CLK_L & SPI_CLKCNT_L) << SPI_CLKCNT_L_S));//clear bit 31, set SPI clock div
-	 */
 }
 
 /*****************************************************************************

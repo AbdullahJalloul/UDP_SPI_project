@@ -1,0 +1,181 @@
+4026cf98 <spi_master_init>:
+
+static inline void pin_func_select (volatile uint32 *pin_name, uint32 func);
+
+static inline void pin_func_select (volatile uint32 *pin_name, uint32 func)
+{
+	uint32 temp = *pin_name;
+4026cf98:	fff461        	l32r	a6, 4026cf68 <spi_task+0xb4>
+	temp &= ~ (PERIPHS_IO_MUX_FUNC << PERIPHS_IO_MUX_FUNC_S);
+4026cf9b:	cfae42        	movi	a4, 0xfffffecf
+
+static inline void pin_func_select (volatile uint32 *pin_name, uint32 func);
+
+static inline void pin_func_select (volatile uint32 *pin_name, uint32 func)
+{
+	uint32 temp = *pin_name;
+4026cf9e:	0020c0        	memw
+4026cfa1:	0628      	l32i.n	a2, a6, 0
+	temp &= ~ (PERIPHS_IO_MUX_FUNC << PERIPHS_IO_MUX_FUNC_S);
+	temp |= ((((func) & BIT2) << 2) | ((func) & (BIT1 | BIT0))) << PERIPHS_IO_MUX_FUNC_S;
+4026cfa3:	032c      	movi.n	a3, 32
+static inline void pin_func_select (volatile uint32 *pin_name, uint32 func);
+
+static inline void pin_func_select (volatile uint32 *pin_name, uint32 func)
+{
+	uint32 temp = *pin_name;
+	temp &= ~ (PERIPHS_IO_MUX_FUNC << PERIPHS_IO_MUX_FUNC_S);
+4026cfa5:	102240        	and	a2, a2, a4
+
+static inline void pin_func_select (volatile uint32 *pin_name, uint32 func);
+
+static inline void pin_func_select (volatile uint32 *pin_name, uint32 func)
+{
+	uint32 temp = *pin_name;
+4026cfa8:	fff151        	l32r	a5, 4026cf6c <spi_task+0xb8>
+	temp &= ~ (PERIPHS_IO_MUX_FUNC << PERIPHS_IO_MUX_FUNC_S);
+	temp |= ((((func) & BIT2) << 2) | ((func) & (BIT1 | BIT0))) << PERIPHS_IO_MUX_FUNC_S;
+4026cfab:	202230        	or	a2, a2, a3
+	*pin_name = temp;
+4026cfae:	0020c0        	memw
+4026cfb1:	0629      	s32i.n	a2, a6, 0
+
+static inline void pin_func_select (volatile uint32 *pin_name, uint32 func);
+
+static inline void pin_func_select (volatile uint32 *pin_name, uint32 func)
+{
+	uint32 temp = *pin_name;
+4026cfb3:	0020c0        	memw
+4026cfb6:	0528      	l32i.n	a2, a5, 0
+4026cfb8:	ffee61        	l32r	a6, 4026cf70 <spi_task+0xbc>
+	temp &= ~ (PERIPHS_IO_MUX_FUNC << PERIPHS_IO_MUX_FUNC_S);
+4026cfbb:	102240        	and	a2, a2, a4
+	temp |= ((((func) & BIT2) << 2) | ((func) & (BIT1 | BIT0))) << PERIPHS_IO_MUX_FUNC_S;
+4026cfbe:	202230        	or	a2, a2, a3
+	*pin_name = temp;
+4026cfc1:	0020c0        	memw
+4026cfc4:	0529      	s32i.n	a2, a5, 0
+
+static inline void pin_func_select (volatile uint32 *pin_name, uint32 func);
+
+static inline void pin_func_select (volatile uint32 *pin_name, uint32 func)
+{
+	uint32 temp = *pin_name;
+4026cfc6:	0020c0        	memw
+4026cfc9:	0628      	l32i.n	a2, a6, 0
+4026cfcb:	ffea51        	l32r	a5, 4026cf74 <spi_task+0xc0>
+	temp &= ~ (PERIPHS_IO_MUX_FUNC << PERIPHS_IO_MUX_FUNC_S);
+4026cfce:	102240        	and	a2, a2, a4
+	temp |= ((((func) & BIT2) << 2) | ((func) & (BIT1 | BIT0))) << PERIPHS_IO_MUX_FUNC_S;
+4026cfd1:	202230        	or	a2, a2, a3
+	*pin_name = temp;
+4026cfd4:	0020c0        	memw
+4026cfd7:	0629      	s32i.n	a2, a6, 0
+
+static inline void pin_func_select (volatile uint32 *pin_name, uint32 func);
+
+static inline void pin_func_select (volatile uint32 *pin_name, uint32 func)
+{
+	uint32 temp = *pin_name;
+4026cfd9:	0020c0        	memw
+4026cfdc:	0568      	l32i.n	a6, a5, 0
+	pin_func_select (PERIPHS_IO_MUX_MTDI_U, 2);	//configure io12 to hspi_miso mode
+	pin_func_select (PERIPHS_IO_MUX_MTCK_U, 2);//configure io13 to Hspi_mosi mode
+	pin_func_select (PERIPHS_IO_MUX_MTMS_U, 2);//configure io14 to Hspi_clk mode
+	pin_func_select (PERIPHS_IO_MUX_MTDO_U, 2);//configure io15 to Hspi_cs mode
+// использование регистров
+	SPI1->spi_user |= SPI_USER_CS_SETUP | SPI_USER_CS_HOLD | SPI_USER_COMMAND;
+4026cfde:	ffe621        	l32r	a2, 4026cf78 <spi_task+0xc4>
+	temp &= ~ (PERIPHS_IO_MUX_FUNC << PERIPHS_IO_MUX_FUNC_S);
+4026cfe1:	104640        	and	a4, a6, a4
+	temp |= ((((func) & BIT2) << 2) | ((func) & (BIT1 | BIT0))) << PERIPHS_IO_MUX_FUNC_S;
+4026cfe4:	203430        	or	a3, a4, a3
+	*pin_name = temp;
+4026cfe7:	0020c0        	memw
+4026cfea:	0539      	s32i.n	a3, a5, 0
+4026cfec:	0020c0        	memw
+4026cfef:	a258      	l32i.n	a5, a2, 40
+4026cff1:	ffe241        	l32r	a4, 4026cf7c <spi_task+0xc8>
+	SPI1->spi_user &= ~SPI_USER_FLASH_MODE;
+4026cff4:	b37c      	movi.n	a3, -5
+	pin_func_select (PERIPHS_IO_MUX_MTDI_U, 2);	//configure io12 to hspi_miso mode
+	pin_func_select (PERIPHS_IO_MUX_MTCK_U, 2);//configure io13 to Hspi_mosi mode
+	pin_func_select (PERIPHS_IO_MUX_MTMS_U, 2);//configure io14 to Hspi_clk mode
+	pin_func_select (PERIPHS_IO_MUX_MTDO_U, 2);//configure io15 to Hspi_cs mode
+// использование регистров
+	SPI1->spi_user |= SPI_USER_CS_SETUP | SPI_USER_CS_HOLD | SPI_USER_COMMAND;
+4026cff6:	205540        	or	a5, a5, a4
+4026cff9:	0020c0        	memw
+4026cffc:	a259      	s32i.n	a5, a2, 40
+	SPI1->spi_user &= ~SPI_USER_FLASH_MODE;
+4026cffe:	0020c0        	memw
+4026d001:	a258      	l32i.n	a5, a2, 40
+4026d003:	105530        	and	a5, a5, a3
+4026d006:	0020c0        	memw
+4026d009:	a259      	s32i.n	a5, a2, 40
+	SPI1->spi_clock_bits.equ_sysclk = 0;
+4026d00b:	0020c0        	memw
+4026d00e:	8268      	l32i.n	a6, a2, 32
+4026d010:	e57c      	movi.n	a5, -2
+4026d012:	105650        	and	a5, a6, a5
+4026d015:	0020c0        	memw
+4026d018:	8259      	s32i.n	a5, a2, 32
+	SPI1->spi_clock_bits.pre_s = SPI_PREDIV_CLK;
+4026d01a:	0020c0        	memw
+4026d01d:	8268      	l32i.n	a6, a2, 32
+4026d01f:	ffd851        	l32r	a5, 4026cf80 <spi_task+0xcc>
+4026d022:	105650        	and	a5, a6, a5
+4026d025:	0020c0        	memw
+4026d028:	8259      	s32i.n	a5, a2, 32
+	SPI1->spi_clock_bits.clkcnt_n = SPI_DIV_CLK_N;
+4026d02a:	0020c0        	memw
+4026d02d:	8268      	l32i.n	a6, a2, 32
+4026d02f:	ffd551        	l32r	a5, 4026cf84 <spi_task+0xd0>
+4026d032:	106650        	and	a6, a6, a5
+4026d035:	94af51        	l32r	a5, 402522f4 <pbus_set_rxbbgain+0x70>
+4026d038:	205650        	or	a5, a6, a5
+4026d03b:	0020c0        	memw
+4026d03e:	8259      	s32i.n	a5, a2, 32
+	SPI1->spi_clock_bits.clkcnt_h = SPI_DIV_CLK_H;
+4026d040:	0020c0        	memw
+4026d043:	8268      	l32i.n	a6, a2, 32
+4026d045:	ffd051        	l32r	a5, 4026cf88 <spi_task+0xd4>
+4026d048:	106650        	and	a6, a6, a5
+4026d04b:	60e451        	l32r	a5, 402453dc <dhcp_create_msg+0x1e0>
+4026d04e:	205650        	or	a5, a6, a5
+4026d051:	0020c0        	memw
+4026d054:	8259      	s32i.n	a5, a2, 32
+	SPI1->spi_clock_bits.clkcnt_l = SPI_DIV_CLK_L;
+4026d056:	0020c0        	memw
+4026d059:	9268      	l32i.n	a6, a2, 36
+4026d05b:	c0af52        	movi	a5, -64
+4026d05e:	106650        	and	a6, a6, a5
+4026d061:	350c      	movi.n	a5, 3
+4026d063:	205650        	or	a5, a6, a5
+4026d066:	0020c0        	memw
+4026d069:	9259      	s32i.n	a5, a2, 36
+// использование макросов
+	SET_PERI_REG_MASK (SPI_USER (HSPI),
+4026d06b:	ffc821        	l32r	a2, 4026cf8c <spi_task+0xd8>
+4026d06e:	0020c0        	memw
+4026d071:	0258      	l32i.n	a5, a2, 0
+4026d073:	204540        	or	a4, a5, a4
+4026d076:	0020c0        	memw
+4026d079:	0249      	s32i.n	a4, a2, 0
+			SPI_CS_SETUP | SPI_CS_HOLD | SPI_USR_COMMAND);
+	CLEAR_PERI_REG_MASK (SPI_USER (HSPI), SPI_FLASH_MODE);
+4026d07b:	0020c0        	memw
+4026d07e:	0248      	l32i.n	a4, a2, 0
+4026d080:	103430        	and	a3, a4, a3
+4026d083:	0020c0        	memw
+4026d086:	0239      	s32i.n	a3, a2, 0
+	WRITE_PERI_REG (SPI_CLOCK (HSPI),
+4026d088:	ffc331        	l32r	a3, 4026cf94 <spi_task+0xe0>
+4026d08b:	ffc121        	l32r	a2, 4026cf90 <spi_task+0xdc>
+4026d08e:	0020c0        	memw
+4026d091:	0239      	s32i.n	a3, a2, 0
+4026d093:	f00d      	ret.n
+4026d095:	000000        	ill
+4026d098:	008000        	excw
+4026d09b:	012480        	slli	a2, a4, 24
+4026d09e:	306000        	xor	a6, a0, a0
