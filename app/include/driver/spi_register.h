@@ -1,10 +1,14 @@
 /*
  *  Copyright (c) 2010 - 2011 Espressif System
+ *  Added on: 17 пїЅпїЅпїЅ 2016 пїЅ.
+ *      Author: пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  *
  */
 
 #ifndef SPI_REGISTER_H_INCLUDED
 #define SPI_REGISTER_H_INCLUDED
+
+#include "c_types.h"
 
 #define REG_SPI_BASE(i)		(0x60000200 - i * 0x100)
 #define SPI_CMD(i)			(REG_SPI_BASE(i) + 0x00)
@@ -198,7 +202,7 @@
 #define     __IO    volatile         /*!< defines 'read / write' permissions  */
 
 
-// описания битовых полей
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
 typedef struct
 {
 	unsigned	flash_read		:1;
@@ -435,6 +439,30 @@ typedef struct SPI_struct
 	__IO u32 spi_w15;
 } SPI_TypeDef;
 
+typedef struct _SPI_ext_typedef
+{
+	__IO u32 spi_ext_0;
+	__IO u32 spi_ext_1;
+	__IO u32 spi_ext_2;
+	__IO u32 spi_ext_3;	
+} SPI_ext_typedef;
+
+#define SPI0_BaseAddress			0x60000200
+#define SPI1_BaseAddress			0x60000100
+
+#define	SPI0_ext_base_address		0x600002F0
+#define	SPI1_ext_base_address		0x600001F0
+
+#define SPI0 		((SPI_TypeDef *) SPI0_BaseAddress)
+#define SPI1 		((SPI_TypeDef *) SPI1_BaseAddress)
+
+#define SPI0EXT		((SPI_ext_typedef *) SPI0_ext_base_address)
+#define SPI1EXT		((SPI_ext_typedef *) SPI1_ext_base_address)
+
+//#define SPI 		((SPI_TypeDef *) SPI0_BaseAddress)
+//#define HSPI		((SPI_TypeDef *) SPI1_BaseAddress)
+
+
 #define SPI_CMD_RESET_VALUE			((u32)0x00000000)
 #define SPI_ADDR_RESET_VALUE		((u32)0x00000000)
 #define SPI_CTRL_RESET_VALUE		((u32)0x00001000)
@@ -468,7 +496,7 @@ typedef struct SPI_struct
 #define SPI_W14_RESET_VALUE			((u32)0x00000000)
 #define SPI_W15_RESET_VALUE			((u32)0x00000000)
 
-// битовые маски в регистрах
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 #define SPI_CMD_FLASH_READ			BIT31
 #define SPI_CMD_FLASH_WREN			BIT30
 #define SPI_CMD_FLASH_WRDI			BIT29
@@ -600,14 +628,5 @@ typedef struct SPI_struct
 #define SPI_SLAVE3_WRBUF_CMD_VALUE_MASK		((u32)0x0000FF00)
 #define SPI_SLAVE3_WRBUF_CMD_VALUE__S		8
 #define SPI_SLAVE3_RDBUF_CMD_VALUE_MASK		((u32)0x000000FF)
-
-#define SPI0_BaseAddress			0x60000200
-#define SPI1_BaseAddress			0x60000100
-
-#define SPI0 		((SPI_TypeDef *) SPI0_BaseAddress)
-#define SPI1 		((SPI_TypeDef *) SPI1_BaseAddress)
-
-//#define SPI 		((SPI_TypeDef *) SPI0_BaseAddress)
-//#define HSPI		((SPI_TypeDef *) SPI1_BaseAddress)
 
 #endif // SPI_REGISTER_H_INCLUDED

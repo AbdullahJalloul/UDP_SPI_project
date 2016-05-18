@@ -19,4 +19,5 @@
  c:\espressif\xtensa-lx106-elf\xtensa-lx106-elf\include\sys\cdefs.h \
  c:\espressif\xtensa-lx106-elf\xtensa-lx106-elf\include\sys\string.h \
  ../include/user_config.h ../include/driver/uart.h \
- ../include/driver/uart_register.h
+ ../include/driver/uart_register.h \
+ c:/Espressif/ESP8266_SDK/include/c_types.h

@@ -7,10 +7,14 @@
  *
  * Modification history:
  *     2015/9/24, v1.0 create this file.
+ *  Added on: 17 мая 2016 г.
+ *      Author: Илья Петрухин
 *******************************************************************************/
 
 #ifndef UART_REGISTER_H_
 #define UART_REGISTER_H_
+
+#include "c_types.h"
 
 #define REG_UART_BASE(i)                (0x60000000ul + (i)*0xf00)
 //version value:32'h062000
@@ -233,6 +237,21 @@ typedef struct
 	__I u8			rx_fifo_cnt	:8;
 }uart_status_t;
 
+typedef enum
+{
+	STOP_1_BIT = 1,
+	STOP_1_5_BIT = 2,
+	STOP_2_BIT = 3
+} uart_stop_bits_t;
+
+typedef enum
+{
+	NUM_5BITS = 0,
+	NUM_6BITS = 1,
+	NUM_7BITS = 2,
+	NUM_8BITS = 3
+} uart_num_bits_t;
+
 typedef struct
 {
 	__IO u8			dummy			:7;
@@ -255,8 +274,8 @@ typedef struct
 	__IO unsigned	txd_brk			:1;
 	__IO unsigned	sw_dtr			:1;
 	__IO unsigned	sw_rts			:1;
-	__IO u8			stop_bit_num	:2;	// Set stop bit: 1:1bit  2:1.5bits  3:2bits
-	__IO u8			bit_num			:2;	// Set bit num:  0:5bits 1:6bits 2:7bits 3:8bits
+	__IO uart_stop_bits_t	stop_bits	:2;	// Set stop bit: 1:1bit  2:1.5bits  3:2bits
+	__IO uart_num_bits_t	num_bits	:2;	// Set bit num:  0:5bits 1:6bits 2:7bits 3:8bits
 	__IO unsigned	parity_en		:1;
 	__IO unsigned	parity			:1;
 } uart_conf0_t;

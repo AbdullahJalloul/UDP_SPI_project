@@ -32,16 +32,16 @@ void cache_flush (void)
 void ICACHE_FLASH_ATTR spi_master_init (void)
 {
 	//	uint32 regvalue;
-#define SPI_PREDIV_CLK		(0)	// предделитель SPI
-#define SPI_DIV_CLK_N		(3)	// делитель SPI от тактовой чаcтоты F = 80МГЦ / (SPI_DIV_CLK_N + 1) = 20MHz
-#define SPI_DIV_CLK_H		((SPI_DIV_CLK_N + 1) / 2 - 1)	// для мастера так
-#define SPI_DIV_CLK_L		(SPI_DIV_CLK_N)					// для мастера так
+#define SPI_PREDIV_CLK		(0)	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ SPI
+#define SPI_DIV_CLK_N		(3)	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ SPI пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅcпїЅпїЅпїЅпїЅ F = 80пїЅпїЅпїЅ / (SPI_DIV_CLK_N + 1) = 20MHz
+#define SPI_DIV_CLK_H		((SPI_DIV_CLK_N + 1) / 2 - 1)	// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ
+#define SPI_DIV_CLK_L		(SPI_DIV_CLK_N)					// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ
 
 	pin_func_select (PERIPHS_IO_MUX_MTDI_U, 2);	//configure io12 to hspi_miso mode
 	pin_func_select (PERIPHS_IO_MUX_MTCK_U, 2);//configure io13 to Hspi_mosi mode
 	pin_func_select (PERIPHS_IO_MUX_MTMS_U, 2);//configure io14 to Hspi_clk mode
 	pin_func_select (PERIPHS_IO_MUX_MTDO_U, 2);//configure io15 to Hspi_cs mode
-// использование регистров
+
 	SPI1->spi_user |= SPI_USER_CS_SETUP | SPI_USER_CS_HOLD | SPI_USER_COMMAND;
 	SPI1->spi_user &= ~SPI_USER_FLASH_MODE;
 	SPI1->spi_clock_bits.equ_sysclk = 0;
@@ -49,25 +49,26 @@ void ICACHE_FLASH_ATTR spi_master_init (void)
 	SPI1->spi_clock_bits.clkcnt_n = SPI_DIV_CLK_N;
 	SPI1->spi_clock_bits.clkcnt_h = SPI_DIV_CLK_H;
 	SPI1->spi_clock_bits.clkcnt_l = SPI_DIV_CLK_L;
-// использование макросов
-	SET_PERI_REG_MASK (SPI_USER (HSPI),
-			SPI_CS_SETUP | SPI_CS_HOLD | SPI_USR_COMMAND);
-	CLEAR_PERI_REG_MASK (SPI_USER (HSPI), SPI_FLASH_MODE);
-	WRITE_PERI_REG (SPI_CLOCK (HSPI),
-		((SPI_PREDIV_CLK & SPI_CLKDIV_PRE) << SPI_CLKDIV_PRE_S)
-			| ((SPI_DIV_CLK_N & SPI_CLKCNT_N) << SPI_CLKCNT_N_S)
-			| ((SPI_DIV_CLK_H & SPI_CLKCNT_H) << SPI_CLKCNT_H_S)
-			| ((SPI_DIV_CLK_L & SPI_CLKCNT_L) << SPI_CLKCNT_L_S));//clear bit 31, set SPI clock div
 
+	/*	SET_PERI_REG_MASK (SPI_USER (HSPI),
+	 SPI_CS_SETUP | SPI_CS_HOLD | SPI_USR_COMMAND);
+
+	 CLEAR_PERI_REG_MASK (SPI_USER (HSPI), SPI_FLASH_MODE);
+	 WRITE_PERI_REG (SPI_CLOCK (HSPI),
+	 ((SPI_PREDIV_CLK & SPI_CLKDIV_PRE) << SPI_CLKDIV_PRE_S)
+	 | ((SPI_DIV_CLK_N & SPI_CLKCNT_N) << SPI_CLKCNT_N_S)
+	 | ((SPI_DIV_CLK_H & SPI_CLKCNT_H) << SPI_CLKCNT_H_S)
+	 | ((SPI_DIV_CLK_L & SPI_CLKCNT_L) << SPI_CLKCNT_L_S));//clear bit 31, set SPI clock div
+	 */
 }
 
 /*****************************************************************************
- * инициализация пина GPIO4 как запроса на передачу
- * активация прерывания по фронту и функции прерывания
+ * пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ GPIO4 пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+ * пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  ****************************************************************************/
-void spi_req_intr_init (void)
+void spi_req_intr_init(void)
 {
-	pin_func_select (PERIPHS_IO_MUX_GPIO4_U, 0);//configure io4 to GPIO mode - прерывание по фронту - запрос на передачу
+	pin_func_select (PERIPHS_IO_MUX_GPIO4_U, 0);//configure io4 to GPIO mode - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
 }
 
@@ -86,7 +87,7 @@ void ICACHE_FLASH_ATTR spi_lcd_9bit_write (uint8 high_bit, uint8 low_8bit)
 	if (high_bit) bytetemp = (low_8bit >> 1) | 0x80;
 	else bytetemp = (low_8bit >> 1) & 0x7f;
 
-	regvalue = ((8 & SPI_USR_COMMAND_BITLEN) << SPI_USR_COMMAND_BITLEN_S) | ((uint32)bytetemp);	//configure transmission variable, 9bit transmission length and first 8 command bit
+	regvalue = ((8 & SPI_USR_COMMAND_BITLEN) << SPI_USR_COMMAND_BITLEN_S) | ((uint32)bytetemp);//configure transmission variable, 9bit transmission length and first 8 command bit
 	if (low_8bit & 0x01)
 	{
 		regvalue |= BIT15;		//write the 9th bit
@@ -109,15 +110,15 @@ void ICACHE_FLASH_ATTR spi_mast_byte_write (uint8 data)
 	while (READ_PERI_REG (SPI_CMD(HSPI)) & SPI_USR)
 	{
 	}
-	CLEAR_PERI_REG_MASK (SPI_USER (HSPI), SPI_USR_MOSI | SPI_USR_MISO);	// запретить чтение и запись
+	CLEAR_PERI_REG_MASK (SPI_USER (HSPI), SPI_USR_MOSI | SPI_USR_MISO);	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 
 	SET_PERI_REG_MASK (SPI_USER (HSPI), SPI_USR_COMMAND);
 
 	//SPI_FLASH_USER2 bit28-31 is cmd length, cmd bit length is value(0-15)+1,
 	// bit15-0 is cmd value.
 	WRITE_PERI_REG (SPI_USER2 (HSPI),
-		((7 & SPI_USR_COMMAND_BITLEN) << SPI_USR_COMMAND_BITLEN_S)
-		| ((uint32) data));
+			((7 & SPI_USR_COMMAND_BITLEN) << SPI_USR_COMMAND_BITLEN_S)
+			| ((uint32) data));
 	SET_PERI_REG_MASK (SPI_CMD(HSPI), SPI_USR);
 	while (READ_PERI_REG (SPI_CMD(HSPI)) & SPI_USR)
 	;
@@ -144,7 +145,7 @@ void ICACHE_FLASH_ATTR spi_byte_write_espslave (uint8 data)
 	// bit15-0 is cmd value.
 	//0x70000000 is for 8bits cmd, 0x04 is eps8266 slave write cmd value
 	WRITE_PERI_REG (SPI_USER2(HSPI),
-		((7 & SPI_USR_COMMAND_BITLEN) << SPI_USR_COMMAND_BITLEN_S) | 4);
+			((7 & SPI_USR_COMMAND_BITLEN) << SPI_USR_COMMAND_BITLEN_S) | 4);
 
 	//in register SPI_FLASH_USER1, bit 8-16 stores MOSI bit length value
 	//The value shall be (bit_num-1).
@@ -176,7 +177,7 @@ void ICACHE_FLASH_ATTR spi_byte_read_espslave (uint8 *data)
 	// bit15-0 is cmd value.
 	//0x70000000 is for 8bits cmd, 0x06 is eps8266 slave read cmd value
 	WRITE_PERI_REG (SPI_USER2 (HSPI),
-		((7 & SPI_USR_COMMAND_BITLEN) << SPI_USR_COMMAND_BITLEN_S) | 6);
+			((7 & SPI_USR_COMMAND_BITLEN) << SPI_USR_COMMAND_BITLEN_S) | 6);
 
 	//in register SPI_FLASH_USER1, bit 8-16 stores MOSI bit length value
 	//The value shall be (bit_num-1).
@@ -219,7 +220,7 @@ void ICACHE_FLASH_ATTR spi_WR_espslave (void)
 
 }
 
-void ICACHE_FLASH_ATTR set_data (void)	// заполнение буфера SPI (64 байта)
+void ICACHE_FLASH_ATTR set_data (void)	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ SPI (64 пїЅпїЅпїЅпїЅпїЅ)
 {
 	WRITE_PERI_REG (SPI_W0(HSPI), 0x05040302);
 	WRITE_PERI_REG (SPI_W1(HSPI), 0x09080706);
@@ -264,10 +265,10 @@ void spi_slave_init (void)
 	//slave mode, slave use buffers which are register "SPI_FLASH_C0~C15", enable trans done isr
 	//set bit 30 bit 29 bit9, bit9 is trans done isr mask
 	SET_PERI_REG_MASK ( SPI_SLAVE(HSPI),
-		SPI_SLAVE_MODE|SPI_SLV_WR_RD_BUF_EN|
-		SPI_SLV_WR_BUF_DONE_EN|SPI_SLV_RD_BUF_DONE_EN|
-		SPI_SLV_WR_STA_DONE_EN|SPI_SLV_RD_STA_DONE_EN|
-		SPI_TRANS_DONE_EN);
+			SPI_SLAVE_MODE|SPI_SLV_WR_RD_BUF_EN|
+			SPI_SLV_WR_BUF_DONE_EN|SPI_SLV_RD_BUF_DONE_EN|
+			SPI_SLV_WR_STA_DONE_EN|SPI_SLV_RD_STA_DONE_EN|
+			SPI_TRANS_DONE_EN);
 	//disable general trans intr 
 	//CLEAR_PERI_REG_MASK (SPI_SLAVE(HSPI), SPI_TRANS_DONE_EN);
 
@@ -292,9 +293,9 @@ void spi_slave_init (void)
 	//set 8 bit slave recieve buffer length, the buffer is SPI_FLASH_C0-C7
 	//set 8 bit slave status register, which is the low 8 bit of register "SPI_FLASH_STATUS"
 	SET_PERI_REG_MASK (SPI_SLAVE1(HSPI), ((0xff & SPI_SLV_BUF_BITLEN) << SPI_SLV_BUF_BITLEN_S)|
-		((0x7 & SPI_SLV_STATUS_BITLEN) << SPI_SLV_STATUS_BITLEN_S)|
-		((0x7 & SPI_SLV_WR_ADDR_BITLEN) << SPI_SLV_WR_ADDR_BITLEN_S)|
-		((0x7 & SPI_SLV_RD_ADDR_BITLEN) << SPI_SLV_RD_ADDR_BITLEN_S));
+			((0x7 & SPI_SLV_STATUS_BITLEN) << SPI_SLV_STATUS_BITLEN_S)|
+			((0x7 & SPI_SLV_WR_ADDR_BITLEN) << SPI_SLV_WR_ADDR_BITLEN_S)|
+			((0x7 & SPI_SLV_RD_ADDR_BITLEN) << SPI_SLV_RD_ADDR_BITLEN_S));
 	CLEAR_PERI_REG_MASK (SPI_SLAVE1(HSPI), BIT25);//CHOOSE ACTIVE STATUS REG
 	SET_PERI_REG_MASK (SPI_PIN (HSPI), BIT19);//BIT19
 
@@ -367,24 +368,24 @@ void spi_slave_isr_handler (void *para)
 	{ //bit7 is for hspi isr,
 		regvalue = READ_PERI_REG (SPI_SLAVE(HSPI));
 		CLEAR_PERI_REG_MASK (SPI_SLAVE(HSPI),
-			SPI_TRANS_DONE_EN
-			| SPI_SLV_WR_STA_DONE_EN
-			| SPI_SLV_RD_STA_DONE_EN
-			| SPI_SLV_WR_BUF_DONE_EN
-			| SPI_SLV_RD_BUF_DONE_EN);
+				SPI_TRANS_DONE_EN
+				| SPI_SLV_WR_STA_DONE_EN
+				| SPI_SLV_RD_STA_DONE_EN
+				| SPI_SLV_WR_BUF_DONE_EN
+				| SPI_SLV_RD_BUF_DONE_EN);
 		SET_PERI_REG_MASK (SPI_SLAVE(HSPI), SPI_SYNC_RESET);
 		CLEAR_PERI_REG_MASK (SPI_SLAVE(HSPI),
-			SPI_TRANS_DONE
-			| SPI_SLV_WR_STA_DONE
-			| SPI_SLV_RD_STA_DONE
-			| SPI_SLV_WR_BUF_DONE
-			| SPI_SLV_RD_BUF_DONE);
+				SPI_TRANS_DONE
+				| SPI_SLV_WR_STA_DONE
+				| SPI_SLV_RD_STA_DONE
+				| SPI_SLV_WR_BUF_DONE
+				| SPI_SLV_RD_BUF_DONE);
 		SET_PERI_REG_MASK (SPI_SLAVE(HSPI),
-			SPI_TRANS_DONE_EN
-			| SPI_SLV_WR_STA_DONE_EN
-			| SPI_SLV_RD_STA_DONE_EN
-			| SPI_SLV_WR_BUF_DONE_EN
-			| SPI_SLV_RD_BUF_DONE_EN);
+				SPI_TRANS_DONE_EN
+				| SPI_SLV_WR_STA_DONE_EN
+				| SPI_SLV_RD_STA_DONE_EN
+				| SPI_SLV_WR_BUF_DONE_EN
+				| SPI_SLV_RD_BUF_DONE_EN);
 
 		if ((regvalue & SPI_SLV_WR_BUF_DONE) && (regvalue & SPI_SLV_RD_BUF_DONE))
 		{
@@ -511,24 +512,24 @@ void spi_slave_isr_sta(void *para)
 	{ //bit7 is for hspi isr,
 		regvalue = READ_PERI_REG (SPI_SLAVE(HSPI));
 		CLEAR_PERI_REG_MASK (SPI_SLAVE(HSPI),
-			SPI_TRANS_DONE_EN
-			| SPI_SLV_WR_STA_DONE_EN
-			| SPI_SLV_RD_STA_DONE_EN
-			| SPI_SLV_WR_BUF_DONE_EN
-			| SPI_SLV_RD_BUF_DONE_EN);
+				SPI_TRANS_DONE_EN
+				| SPI_SLV_WR_STA_DONE_EN
+				| SPI_SLV_RD_STA_DONE_EN
+				| SPI_SLV_WR_BUF_DONE_EN
+				| SPI_SLV_RD_BUF_DONE_EN);
 		SET_PERI_REG_MASK (SPI_SLAVE(HSPI), SPI_SYNC_RESET);
 		CLEAR_PERI_REG_MASK (SPI_SLAVE(HSPI),
-			SPI_TRANS_DONE
-			| SPI_SLV_WR_STA_DONE
-			| SPI_SLV_RD_STA_DONE
-			| SPI_SLV_WR_BUF_DONE
-			| SPI_SLV_RD_BUF_DONE);
+				SPI_TRANS_DONE
+				| SPI_SLV_WR_STA_DONE
+				| SPI_SLV_RD_STA_DONE
+				| SPI_SLV_WR_BUF_DONE
+				| SPI_SLV_RD_BUF_DONE);
 		SET_PERI_REG_MASK (SPI_SLAVE(HSPI),
-			SPI_TRANS_DONE_EN
-			| SPI_SLV_WR_STA_DONE_EN
-			| SPI_SLV_RD_STA_DONE_EN
-			| SPI_SLV_WR_BUF_DONE_EN
-			| SPI_SLV_RD_BUF_DONE_EN);
+				SPI_TRANS_DONE_EN
+				| SPI_SLV_WR_STA_DONE_EN
+				| SPI_SLV_RD_STA_DONE_EN
+				| SPI_SLV_WR_BUF_DONE_EN
+				| SPI_SLV_RD_BUF_DONE_EN);
 
 		if (regvalue & SPI_SLV_WR_BUF_DONE)
 		{
@@ -630,7 +631,7 @@ void spi_slave_isr_sta(void *para)
 
 void ICACHE_FLASH_ATTR set_miso_data (void)
 {
-	if (!(gpio_input_get () & BIT2))	// если GPIO2 = =  0
+	if (!(gpio_input_get () & BIT2))	// пїЅпїЅпїЅпїЅ GPIO2 = =  0
 	//if (GPIO_INPUT_GET (2) = =  0)
 	{
 		WRITE_PERI_REG (SPI_W8 (HSPI), 0x05040302);
