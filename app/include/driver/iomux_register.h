@@ -1,8 +1,8 @@
 /*
  * iomux_register.h
  *
- *  Created on: 17 ��� 2016 �.
- *      Author: ���� ��������
+ *  Created on: 17.05.2016
+ *      Author: Ilya Petrukhin
  */
 
 #ifndef _IOMUX_REGISTER_H_
@@ -22,145 +22,145 @@
 
 typedef struct
 {
-	__IO u32 dummy :20;
-	__IO unsigned dummy11 :1;
-	__IO unsigned dummy10 :1;
-	__IO unsigned spi1_sys_clk :1; // BIT 9 SPI1_CLK_EQU_SYS_CLK
-	__IO unsigned spi0_sys_clk :1;	// BIT 8 SPI0_CLK_EQU_SYS_CLK
-	__IO unsigned dummy7 :1;
-	__IO unsigned dummy6 :1;
-	__IO unsigned dummy5 :1;
-	__IO unsigned dummy4 :1;
-	__IO unsigned dummy3 :1;
-	__IO unsigned dummy2 :1;
-	__IO unsigned dummy1 :1;
-	__IO unsigned dummy0 :1;
+	__IO u32		dummy			:20;
+	__IO unsigned	dummy11			:1;
+	__IO unsigned	dummy10			:1;
+	__IO unsigned	spi1_sys_clk	:1; // BIT 9 SPI1_CLK_EQU_SYS_CLK
+	__IO unsigned	spi0_sys_clk	:1;	// BIT 8 SPI0_CLK_EQU_SYS_CLK
+	__IO unsigned	dummy7			:1;
+	__IO unsigned	dummy6			:1;
+	__IO unsigned	dummy5			:1;
+	__IO unsigned	dummy4			:1;
+	__IO unsigned	dummy3			:1;
+	__IO unsigned	dummy2			:1;
+	__IO unsigned	dummy1			:1;
+	__IO unsigned	dummy0			:1;
 } gpio_mux_cfg_t;
 
 typedef struct
 {
-	__IO u32 dummy :26;
-	__IO unsigned func_sel_2 :1;
-	__IO unsigned sleep_pulldown :1;
-	__IO unsigned dummy4 :1;
-	__IO unsigned pulldown :1;
-	__IO unsigned dummy2 :1;
-	__IO unsigned func_sel_1 :1;
-	__IO unsigned func_sel_0 :1;
+	__IO u32		dummy			:26;
+	__IO unsigned	func_sel_2		:1;
+	__IO unsigned	sleep_pulldown	:1;
+	__IO unsigned	dummy4			:1;
+	__IO unsigned	pulldown		:1;
+	__IO unsigned	dummy2			:1;
+	__IO unsigned	func_sel_1		:1;
+	__IO unsigned	func_sel_0		:1;
 } gpio16_mux_t;
 
 typedef struct
 {
-	__IO u32 dummy :24;
-	__IO unsigned func_sel_2 :1;
-	__IO unsigned pullup :1;
-	__IO unsigned pullup2 :1;
-	__IO unsigned func_sel_1 :1;
-	__IO unsigned func_sel_0 :1;
-	__IO unsigned sleep_pullup :1;
-	__IO unsigned sleep_pullup2 :1;
-	__IO unsigned sleep_sel :1;
-	__IO unsigned sleep_oe :1;
+	__IO u32		dummy			:24;
+	__IO unsigned	func_sel_2		:1;
+	__IO unsigned	pullup			:1;
+	__IO unsigned	pullup2			:1;
+	__IO unsigned	func_sel_1		:1;
+	__IO unsigned	func_sel_0		:1;
+	__IO unsigned	sleep_pullup	:1;
+	__IO unsigned	sleep_pullup2	:1;
+	__IO unsigned	sleep_sel		:1;
+	__IO unsigned	sleep_oe		:1;
 } gpio_mux_t;
 
 typedef struct
 {
 	union
 	{
-		__IO u32 gpio_mux_cfg;
-		__IO gpio_mux_cfg_t gpio_mux_cfg_bits;
+		__IO u32 			gpio_mux_cfg;
+		__IO gpio_mux_cfg_t	gpio_mux_cfg_bits;
 	};
 	union
 	{
-		__IO u32 gpio_mux_mtdi_u;
-		__IO u32 gpio12_mux;
-		__IO gpio_mux_t gpio12_mux_bits;
+		__IO u32			gpio_mux_mtdi_u;
+		__IO u32			gpio12_mux;
+		__IO gpio_mux_t		gpio12_mux_bits;
 	};
 	union
 	{
-		__IO u32 gpio_mux_mtck_u;
-		__IO u32 gpio13_mux;
-		__IO gpio_mux_t gpio13_mux_bits;
+		__IO u32			gpio_mux_mtck_u;
+		__IO u32			gpio13_mux;
+		__IO gpio_mux_t		gpio13_mux_bits;
 	};
 	union
 	{
-		__IO u32 gpio_mux_mtms_u;
-		__IO u32 gpio14_mux;
-		__IO gpio_mux_t gpio14_mux_bits;
+		__IO u32			gpio_mux_mtms_u;
+		__IO u32			gpio14_mux;
+		__IO gpio_mux_t		gpio14_mux_bits;
 	};
 	union
 	{
-		__IO u32 gpio_mux_mtdo_u;
-		__IO u32 gpio15_mux;
-		__IO gpio_mux_t gpio15_mux_bits;
+		__IO u32			gpio_mux_mtdo_u;
+		__IO u32			gpio15_mux;
+		__IO gpio_mux_t		gpio15_mux_bits;
 	};
 	union
 	{
-		__IO u32 gpio_mux_u0rxd_u;
-		__IO u32 gpio3_mux;
-		__IO gpio_mux_t gpio3_mux_bits;
+		__IO u32			gpio_mux_u0rxd_u;
+		__IO u32			gpio3_mux;
+		__IO gpio_mux_t		gpio3_mux_bits;
 	};
 	union
 	{
-		__IO u32 gpio_mux_u0txd_u;
-		__IO u32 gpio1_mux;
-		__IO gpio_mux_t gpio1_mux_bits;
+		__IO u32			gpio_mux_u0txd_u;
+		__IO u32			gpio1_mux;
+		__IO gpio_mux_t		gpio1_mux_bits;
 	};
 	union
 	{
-		__IO u32 gpio_mux_sdclk_u;
-		__IO u32 gpio6_mux;
-		__IO gpio_mux_t gpio6_mux_bits;
+		__IO u32			gpio_mux_sdclk_u;
+		__IO u32			gpio6_mux;
+		__IO gpio_mux_t		gpio6_mux_bits;
 	};
 	union
 	{
-		__IO u32 gpio_mux_sd_data0_u;
-		__IO u32 gpio7_mux;
-		__IO gpio_mux_t gpio7_mux_bits;
+		__IO u32			gpio_mux_sd_data0_u;
+		__IO u32			gpio7_mux;
+		__IO gpio_mux_t		gpio7_mux_bits;
 	};
 	union
 	{
-		__IO u32 gpio_mux_sd_data1_u;
-		__IO u32 gpio8_mux;
-		__IO gpio_mux_t gpio8_mux_bits;
+		__IO u32			gpio_mux_sd_data1_u;
+		__IO u32			gpio8_mux;
+		__IO gpio_mux_t		gpio8_mux_bits;
 	};
 	union
 	{
-		__IO u32 gpio_mux_sd_data2_u;
-		__IO u32 gpio9_mux;
-		__IO gpio_mux_t gpio9_mux_bits;
+		__IO u32			gpio_mux_sd_data2_u;
+		__IO u32			gpio9_mux;
+		__IO gpio_mux_t		gpio9_mux_bits;
 	};
 	union
 	{
-		__IO u32 gpio_mux_sd_data3_u;
-		__IO u32 gpio10_mux;
-		__IO gpio_mux_t gpio10_mux_bits;
+		__IO u32			gpio_mux_sd_data3_u;
+		__IO u32			gpio10_mux;
+		__IO gpio_mux_t		gpio10_mux_bits;
 	};
 	union
 	{
-		__IO u32 gpio_mux_sd_cmd_u;
-		__IO u32 gpio11_mux;
-		__IO gpio_mux_t gpio11_mux_bits;
+		__IO u32			gpio_mux_sd_cmd_u;
+		__IO u32			gpio11_mux;
+		__IO gpio_mux_t		gpio11_mux_bits;
 	};
 	union
 	{
-		__IO u32 gpio0_mux;
-		__IO gpio_mux_t gpio0_mux_bits;
+		__IO u32			gpio0_mux;
+		__IO gpio_mux_t		gpio0_mux_bits;
 	};
 	union
 	{
-		__IO u32 gpio2_mux;
-		__IO gpio_mux_t gpio2_mux_bits;
+		__IO u32			gpio2_mux;
+		__IO gpio_mux_t		gpio2_mux_bits;
 	};
 	union
 	{
-		__IO u32 gpio4_mux;
-		__IO gpio_mux_t gpio4_mux_bits;
+		__IO u32			gpio4_mux;
+		__IO gpio_mux_t		gpio4_mux_bits;
 	};
 	union
 	{
-		__IO u32 gpio5_mux;
-		__IO gpio_mux_t gpio5_mux_bits;
+		__IO u32			gpio5_mux;
+		__IO gpio_mux_t		gpio5_mux_bits;
 	};
 } IOMUX_typedef;
 
@@ -360,7 +360,7 @@ __IO gpio_mux_t * const gpio_mux_registers[16] =
 // таблица (по 4 бита на номер пина) адресов IO_MUX в соответствии с номерами GPIOn
 #define _IO_MUX_GPIO ((uint64_t)0x3210BA9876FE4D5Cull)
 // получить адрес IO_MUX в соответствии с номером GPIOn
-#define GPIOx_MUX(PIN_NUM) iomux_[1 + (uint32)((_IO_MUX_GPIO>>((PIN_NUM)<<2)) & 0x0F)]
+#define GPIOx_MUX(PIN_NUM) iomux_[1 + (uint32)((_IO_MUX_GPIO >> ((PIN_NUM) << 2)) & 0x0F)]
 
 // таблица (по 2 бита на номер пина) номеров функций пинов для установки в режим GPIO
 #define _FUN_IO_PORT  ((uint32_t)0xFFFFF0CCul)
@@ -368,12 +368,16 @@ __IO gpio_mux_t * const gpio_mux_registers[16] =
 #define _FUN_DEF_SDK  ((uint64_t)0x3333111111000200ull)
 
 // получить номер функции для установки I/O пина в режим порта GPIOn
-#define MUX_FUN_IO_PORT(PIN_NUM) ((uint32_t)(_FUN_IO_PORT >> (PIN_NUM<<1)) & 0x03)
+#define MUX_FUN_IO_PORT(PIN_NUM) ((uint32_t)(_FUN_IO_PORT >> (PIN_NUM << 1)) & 0x03)
 // получить номер функции для установки I/O пина в режим по умочанию в SDK
-#define MUX_FUN_DEF_SDK(PIN_NUM) ((uint32_t)(_FUN_DEF_SDK >> (PIN_NUM<<2)) & 0x07)
+#define MUX_FUN_DEF_SDK(PIN_NUM) ((uint32_t)(_FUN_DEF_SDK >> (PIN_NUM << 2)) & 0x07)
 
-#define SET_PIN_FUNC(PIN_NUM, FUN) GPIOx_MUX(PIN_NUM) = (GPIOx_MUX(PIN_NUM) & (~GPIO_MUX_FUN_MASK)) | ((FUN&3) << GPIO_MUX_FUN_BIT0) | ((FUN & 4) << (GPIO_MUX_FUN_BIT2 - 2))
-#define GET_PIN_FUNC(PIN_NUM) (((GPIOx_MUX(PIN_NUM) >> GPIO_MUX_FUN_BIT0) & 3) | ((GPIOx_MUX(PIN_NUM) >> (GPIO_MUX_FUN_BIT2 - 2)) & 4))
+#define SET_PIN_FUNC(PIN_NUM, FUN) GPIOx_MUX(PIN_NUM) = \
+	(GPIOx_MUX (PIN_NUM) & (~GPIO_MUX_FUN_MASK)) \
+	| ((FUN & 3) << GPIO_MUX_FUN_BIT0) \
+	| ((FUN & 4) << (GPIO_MUX_FUN_BIT2 - 2))
+#define GET_PIN_FUNC(PIN_NUM) (((GPIOx_MUX(PIN_NUM) >> GPIO_MUX_FUN_BIT0) & 3) \
+		| ((GPIOx_MUX(PIN_NUM) >> (GPIO_MUX_FUN_BIT2 - 2)) & 4))
 #define SET_PIN_PULLUP_ENA(PIN_NUM)  GPIOx_MUX(PIN_NUM) |= 1 << GPIO_MUX_PULLUP_BIT
 #define SET_PIN_PULLUP_DIS(PIN_NUM) GPIOx_MUX(PIN_NUM) &= ~(1 << GPIO_MUX_PULLUP_BIT)
 #define SET_PIN_PULL_DIS(PIN_NUM) GPIOx_MUX(PIN_NUM) &= ~((1 << GPIO_MUX_PULLUP_BIT) | (1 << GPIO_MUX_PULLDOWN_BIT))

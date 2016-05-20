@@ -12,40 +12,41 @@
 void ICACHE_FLASH_ATTR gpio_config1 (gpio_config_t *config)
 {
 	u32 pin_mask = 1 << (config->num_pin);
-	__IO GPIO_pin_t *p_pin = &GPIO->pin_0_bits + sizeof (GPIO_pin_t) * (config->num_pin);
+	__IO GPIO_pin_t *p_pin = &GPIO->pin_0_bits + sizeof(GPIO_pin_t) * (config->num_pin);
 	__IO u32 *p_mux = (__IO u32 *)gpio_mux_registers[config->num_pin];
 //	__IO gpio_mux_t *p_mux_bits = gpio_mux_registers[config->num_pin];
-	
+
 	switch (config->mode)
 	{
 	case GPIO_MODE_INPUT:
 		GPIO->enable_w1tc = pin_mask;
 		break;
-		
+
 	case GPIO_MODE_OUTPUT_OD:
 		p_pin->pin_driver = OPEN_DRAIN;
 		break;
-		
+
 	case GPIO_MODE_OUTPUT_PP:
 		GPIO->enable_w1ts = pin_mask;
 		break;
-		
+
 	case GPIO_MODE_SIGMA_DELTA:
 		p_pin->gpio_source = SIGMA_DELTA;
 		break;
-		
+
 	default:	// == GPIO_MODE_INPUT
 		GPIO->enable_w1tc = pin_mask;
 		break;
 	}
 // pin in GPIO mode
-	if ((config->num_pin == 0) || (config->num_pin == 2) || (config->num_pin == 4) || (config->num_pin == 5))
+	if ( (config->num_pin == 0) || (config->num_pin == 2)
+	        || (config->num_pin == 4) || (config->num_pin == 5))
 	{
 		*p_mux = (*p_mux & ~GPIO_MUX_FUNC_MASK) | GPIO_MUX_FUNC_0;
 	}
 	else
 	{
-		*p_mux = (*p_mux & ~GPIO_MUX_FUNC_MASK) | GPIO_MUX_FUNC_3;		
+		*p_mux = (*p_mux & ~GPIO_MUX_FUNC_MASK) | GPIO_MUX_FUNC_3;
 	}
 // pull-up
 	((gpio_mux_t *)p_mux)->pullup = config->pullup;
@@ -92,31 +93,31 @@ void ICACHE_FLASH_ATTR gpio_config (GPIO_ConfigTypeDef *pGPIOConfig)
 			}
 			else
 			{
-				PIN_PULLUP_DIS (io_reg);
+				PIN_PULLUP_DIS(io_reg);
 			}
 
 			if (pGPIOConfig->GPIO_Mode == GPIO_Mode_Out_OD)
 			{
-	//				portENTER_CRITICAL();
-	
+				//				portENTER_CRITICAL();
+
 				pin_reg = GPIO_REG_READ(GPIO_PIN_ADDR(io_num));
 				pin_reg &= (~GPIO_PIN_DRIVER_MASK);
 				pin_reg |= (GPIO_PAD_DRIVER_ENABLE << GPIO_PIN_DRIVER_LSB);
 				GPIO_REG_WRITE(GPIO_PIN_ADDR(io_num), pin_reg);
-	
-	//				portEXIT_CRITICAL();
+
+				//				portEXIT_CRITICAL();
 			}
 			else if (pGPIOConfig->GPIO_Mode == GPIO_Mode_Sigma_Delta)
 			{
-	//				portENTER_CRITICAL();
-	
+				//				portENTER_CRITICAL();
+
 				pin_reg = GPIO_REG_READ(GPIO_PIN_ADDR(io_num));
 				pin_reg &= (~GPIO_PIN_SOURCE_MASK);
 				pin_reg |= (0x1 << GPIO_PIN_SOURCE_LSB);
 				GPIO_REG_WRITE(GPIO_PIN_ADDR(io_num), pin_reg);
 				GPIO_REG_WRITE(GPIO_SIGMA_DELTA_ADDRESS, SIGMA_DELTA_ENABLE);
-	
-	//				portEXIT_CRITICAL();
+
+				//				portEXIT_CRITICAL();
 			}
 			gpio_pin_intr_state_set (io_num, pGPIOConfig->GPIO_IntrType);
 		}
@@ -136,16 +137,16 @@ void ICACHE_FLASH_ATTR gpio_config (GPIO_ConfigTypeDef *pGPIOConfig)
  * into multiple calls.
  */
 void ICACHE_FLASH_ATTR gpio_output_conf (uint32 set_mask, uint32 clear_mask,
-    uint32 enable_mask, uint32 disable_mask)
+        uint32 enable_mask, uint32 disable_mask)
 {
 //	GPIO_REG_WRITE (GPIO_OUT_W1TS_ADDRESS, set_mask);
-GPIO->out_w1ts = set_mask;
+	GPIO->out_w1ts = set_mask;
 //	GPIO_REG_WRITE (GPIO_OUT_W1TC_ADDRESS, clear_mask);
-GPIO->out_w1tc = clear_mask;
+	GPIO->out_w1tc = clear_mask;
 //	GPIO_REG_WRITE (GPIO_ENABLE_W1TS_ADDRESS, enable_mask);
-GPIO->enable_w1ts = enable_mask;
+	GPIO->enable_w1ts = enable_mask;
 //	GPIO_REG_WRITE (GPIO_ENABLE_W1TC_ADDRESS, disable_mask);
-GPIO->enable_w1tc = disable_mask;
+	GPIO->enable_w1tc = disable_mask;
 }
 
 /*
@@ -154,7 +155,7 @@ GPIO->enable_w1tc = disable_mask;
 uint32 ICACHE_FLASH_ATTR gpio_input_get (void)
 {
 //	return GPIO_REG_READ (GPIO_IN_ADDRESS);
-return GPIO->in;
+	return GPIO->in;
 }
 
 /*
@@ -170,95 +171,92 @@ return GPIO->in;
  */
 void ICACHE_FLASH_ATTR gpio_intr_handler_register (void *fn)
 {
-//	_xt_isr_attach (ETS_GPIO_INUM, fn, NULL);
+	//	_xt_isr_attach (ETS_GPIO_INUM, fn, NULL);
 }
 
 /*
  only highlevel and lowlevel intr can use for wakeup
  */
-void ICACHE_FLASH_ATTR gpio_pin_wakeup_enable (uint32 i,
-    GPIO_INT_TYPE intr_state)
+void ICACHE_FLASH_ATTR gpio_pin_wakeup_enable (uint32 i, gpio_pin_int_t intr_state)
 {
-uint32 pin_reg;
+	uint32 pin_reg;
+	__IO GPIO_pin_t *p_pin = &GPIO->pin_0_bits + sizeof(GPIO_pin_t) * i;
 
-//	if ((intr_state == GPIO_PIN_INTR_LOLEVEL) || (intr_state == GPIO_PIN_INTR_HILEVEL))
-if ( (intr_state == 4) || (intr_state == 5))
-{
-//		portENTER_CRITICAL();
-
-	pin_reg = GPIO_REG_READ(GPIO_PIN_ADDR (i));
-	pin_reg &= (~GPIO_PIN_INT_TYPE_MASK);
-	pin_reg |= (intr_state << GPIO_PIN_INT_TYPE_LSB);
-	pin_reg |= GPIO_PIN_WAKEUP_ENABLE_SET(GPIO_WAKEUP_ENABLE);
-	GPIO_REG_WRITE(GPIO_PIN_ADDR(i), pin_reg);
-
-//		portEXIT_CRITICAL();
-}
+	//	if ((intr_state == GPIO_PIN_INTR_LOLEVEL) || (intr_state == GPIO_PIN_INTR_HILEVEL))
+	if ( (intr_state == GPIO_INT_LOW_LEVEL) || (intr_state == GPIO_INT_HIGH_LEVEL))
+	{
+		//		portENTER_CRITICAL();
+		p_pin->pin_int = intr_state;
+/*		pin_reg = GPIO_REG_READ(GPIO_PIN_ADDR (i));
+		pin_reg &= (~GPIO_PIN_INT_TYPE_MASK);
+		pin_reg |= (intr_state << GPIO_PIN_INT_TYPE_LSB);
+		pin_reg |= GPIO_PIN_WAKEUP_ENABLE_SET(GPIO_WAKEUP_ENABLE);
+		GPIO_REG_WRITE(GPIO_PIN_ADDR(i), pin_reg);
+*/
+		//		portEXIT_CRITICAL();
+	}
 }
 
 void ICACHE_FLASH_ATTR gpio_pin_wakeup_disable (void)
 {
-uint8 i;
-__IO GPIO_pin_t *pin_reg_p = &GPIO->pin_0_bits;
+	uint8 i;
+	__IO GPIO_pin_t *pin_reg_p = &GPIO->pin_0_bits;
 
-for (i = 0; i < GPIO_PIN_COUNT; i++)
-{
-	pin_reg_p->wakeup_enable = 0;
-	pin_reg_p++;
-}
-}
-
-void ICACHE_FLASH_ATTR gpio_pin_intr_state_set (uint32 i,
-    GPIO_INT_TYPE intr_state)
-{
-uint32 pin_reg;
-
-//	portENTER_CRITICAL();
-
-pin_reg = GPIO_REG_READ(GPIO_PIN_ADDR(i));
-pin_reg &= (~GPIO_PIN_INT_TYPE_MASK);
-pin_reg |= (intr_state << GPIO_PIN_INT_TYPE_LSB);
-GPIO_REG_WRITE(GPIO_PIN_ADDR(i), pin_reg);
-
-//	portEXIT_CRITICAL();
+	for (i = 0; i < GPIO_PIN_COUNT; i++)
+	{
+		pin_reg_p->wakeup_enable = 0;
+		pin_reg_p++;
+	}
 }
 
-void ICACHE_FLASH_ATTR
-gpio16_output_conf (void)
+void ICACHE_FLASH_ATTR gpio_pin_intr_state_set (uint32 i, gpio_pin_int_t intr_state)
 {
-WRITE_PERI_REG(PAD_XPD_DCDC_CONF,
-        (READ_PERI_REG(PAD_XPD_DCDC_CONF) & 0xffffffbc) | (uint32)0x1); // mux configuration for XPD_DCDC to output rtc_gpio0
+//	uint32 pin_reg;
 
-WRITE_PERI_REG(RTC_GPIO_CONF,
-        (READ_PERI_REG(RTC_GPIO_CONF) & (uint32)0xfffffffe) | (uint32)0x0); //mux configuration for out enable
-
-WRITE_PERI_REG(RTC_GPIO_ENABLE,
-        (READ_PERI_REG(RTC_GPIO_ENABLE) & (uint32)0xfffffffe) | (uint32)0x1); //out enable
+	//	portENTER_CRITICAL();
+	__IO GPIO_pin_t *p_pin = &GPIO->pin_0_bits + sizeof(GPIO_pin_t) * i;
+	p_pin->pin_int = intr_state;
+	
+/*	pin_reg = GPIO_REG_READ(GPIO_PIN_ADDR(i));
+	pin_reg &= (~GPIO_PIN_INT_TYPE_MASK);
+	pin_reg |= (intr_state << GPIO_PIN_INT_TYPE_LSB);
+	GPIO_REG_WRITE(GPIO_PIN_ADDR(i), pin_reg);
+*/
+	//	portEXIT_CRITICAL();
 }
 
-void ICACHE_FLASH_ATTR
-gpio16_output_set (uint8 value)
+void ICACHE_FLASH_ATTR gpio16_output_conf (void)
 {
-WRITE_PERI_REG(RTC_GPIO_OUT,
-        (READ_PERI_REG(RTC_GPIO_OUT) & (uint32)0xfffffffe) | (uint32)(value & 1));
+	WRITE_PERI_REG(PAD_XPD_DCDC_CONF,
+	        (READ_PERI_REG(PAD_XPD_DCDC_CONF) & 0xffffffbc) | (uint32)0x1); // mux configuration for XPD_DCDC to output rtc_gpio0
+
+	WRITE_PERI_REG(RTC_GPIO_CONF,
+	        (READ_PERI_REG(RTC_GPIO_CONF) & (uint32)0xfffffffe) | (uint32)0x0); //mux configuration for out enable
+
+	WRITE_PERI_REG(RTC_GPIO_ENABLE,
+	        (READ_PERI_REG(RTC_GPIO_ENABLE) & (uint32)0xfffffffe) | (uint32)0x1); //out enable
 }
 
-void ICACHE_FLASH_ATTR
-gpio16_input_conf (void)
+void ICACHE_FLASH_ATTR gpio16_output_set (uint8 value)
 {
-WRITE_PERI_REG(PAD_XPD_DCDC_CONF,
-        (READ_PERI_REG(PAD_XPD_DCDC_CONF) & 0xffffffbc) | (uint32)0x1); // mux configuration for XPD_DCDC and rtc_gpio0 connection
-
-WRITE_PERI_REG(RTC_GPIO_CONF,
-        (READ_PERI_REG(RTC_GPIO_CONF) & (uint32)0xfffffffe) | (uint32)0x0); //mux configuration for out enable
-
-WRITE_PERI_REG(RTC_GPIO_ENABLE,
-        READ_PERI_REG(RTC_GPIO_ENABLE) & (uint32)0xfffffffe); //out disable
+	WRITE_PERI_REG(RTC_GPIO_OUT,
+	        (READ_PERI_REG(RTC_GPIO_OUT) & (uint32)0xfffffffe) | (uint32)(value & 1));
 }
 
-uint8 ICACHE_FLASH_ATTR
-gpio16_input_get (void)
+void ICACHE_FLASH_ATTR gpio16_input_conf (void)
 {
-return (uint8) (READ_PERI_REG(RTC_GPIO_IN_DATA) & 1);
+	WRITE_PERI_REG(PAD_XPD_DCDC_CONF,
+	        (READ_PERI_REG(PAD_XPD_DCDC_CONF) & 0xffffffbc) | (uint32)0x1); // mux configuration for XPD_DCDC and rtc_gpio0 connection
+
+	WRITE_PERI_REG(RTC_GPIO_CONF,
+	        (READ_PERI_REG(RTC_GPIO_CONF) & (uint32)0xfffffffe) | (uint32)0x0); //mux configuration for out enable
+
+	WRITE_PERI_REG(RTC_GPIO_ENABLE,
+	        READ_PERI_REG(RTC_GPIO_ENABLE) & (uint32)0xfffffffe); //out disable
+}
+
+uint8 ICACHE_FLASH_ATTR gpio16_input_get (void)
+{
+	return (uint8) (READ_PERI_REG(RTC_GPIO_IN_DATA) & 1);
 }
 

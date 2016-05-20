@@ -321,151 +321,160 @@
 #define GPIO_REG_READ(reg)					READ_PERI_REG(PERIPHS_GPIO_BASEADDR + reg)
 #define GPIO_REG_WRITE(reg, val)			WRITE_PERI_REG(PERIPHS_GPIO_BASEADDR + reg, val)
 
+#ifndef __I
 #define	__I		volatile const	/*!< defines 'read only' permissions	*/
-#define	__O		volatile		/*!< defines 'write only' permissions	*/
-#define	__IO	volatile		/*!< defines 'read / write' permissions*/
+#endif	//#ifndef __I
 
+#ifndef __O
+#define	__O		volatile		/*!< defines 'write only' permissions	*/
+#endif	//#ifndef __O
+
+#ifndef __IO
+#define	__IO	volatile		/*!< defines 'read / write' permissions*/
+#endif	// #ifndef __IO
+
+/*********************** GPIO structures **************************************/
 typedef struct
 {
-	__IO u16 bt_sel :16;
-	__IO unsigned pin_15 :1;
-	__IO unsigned pin_14 :1;
-	__IO unsigned pin_13 :1;
-	__IO unsigned pin_12 :1;
-	__IO unsigned pin_11 :1;
-	__IO unsigned pin_10 :1;
-	__IO unsigned pin_9 :1;
-	__IO unsigned pin_8 :1;
-	__IO unsigned pin_7 :1;
-	__IO unsigned pin_6 :1;
-	__IO unsigned pin_5 :1;
-	__IO unsigned pin_4 :1;
-	__IO unsigned pin_3 :1;
-	__IO unsigned pin_2 :1;
-	__IO unsigned pin_1 :1;
-	__IO unsigned pin_0 :1;
+	__IO u16		bt_sel	:16;	// BT-Coexist Selection register
+	__IO unsigned	pin_15	:1;		// The output value when the GPIO pin is set as output.
+	__IO unsigned	pin_14	:1;
+	__IO unsigned	pin_13	:1;
+	__IO unsigned	pin_12	:1;
+	__IO unsigned	pin_11	:1;
+	__IO unsigned	pin_10	:1;
+	__IO unsigned	pin_9	:1;
+	__IO unsigned	pin_8	:1;
+	__IO unsigned	pin_7	:1;
+	__IO unsigned	pin_6	:1;
+	__IO unsigned	pin_5	:1;
+	__IO unsigned	pin_4	:1;
+	__IO unsigned	pin_3	:1;
+	__IO unsigned	pin_2	:1;
+	__IO unsigned	pin_1	:1;
+	__IO unsigned	pin_0	:1;
 } GPIO_out_t;
 
 typedef struct
 {
-	__O u16 dummy :16;
-	__O unsigned pin_15 :1;
-	__O unsigned pin_14 :1;
-	__O unsigned pin_13 :1;
-	__O unsigned pin_12 :1;
-	__O unsigned pin_11 :1;
-	__O unsigned pin_10 :1;
-	__O unsigned pin_9 :1;
-	__O unsigned pin_8 :1;
-	__O unsigned pin_7 :1;
-	__O unsigned pin_6 :1;
-	__O unsigned pin_5 :1;
-	__O unsigned pin_4 :1;
-	__O unsigned pin_3 :1;
-	__O unsigned pin_2 :1;
-	__O unsigned pin_1 :1;
-	__O unsigned pin_0 :1;
+	__O u16			dummy16	:16;
+	__O unsigned	pin_15	:1;
+	__O unsigned	pin_14	:1;
+	__O unsigned	pin_13	:1;
+	__O unsigned	pin_12	:1;
+	__O unsigned	pin_11	:1;
+	__O unsigned	pin_10	:1;
+	__O unsigned	pin_9	:1;
+	__O unsigned	pin_8	:1;
+	__O unsigned	pin_7	:1;
+	__O unsigned	pin_6	:1;
+	__O unsigned	pin_5	:1;
+	__O unsigned	pin_4	:1;
+	__O unsigned	pin_3	:1;
+	__O unsigned	pin_2	:1;
+	__O unsigned	pin_1	:1;
+	__O unsigned	pin_0	:1;
 } GPIO_out_w_t;
 
 typedef struct
 {
-	__IO u16 dummy :10;
-	__IO u8 sdio_sel :6;
-	__IO unsigned pin_15 :1;
-	__IO unsigned pin_14 :1;
-	__IO unsigned pin_13 :1;
-	__IO unsigned pin_12 :1;
-	__IO unsigned pin_11 :1;
-	__IO unsigned pin_10 :1;
-	__IO unsigned pin_9 :1;
-	__IO unsigned pin_8 :1;
-	__IO unsigned pin_7 :1;
-	__IO unsigned pin_6 :1;
-	__IO unsigned pin_5 :1;
-	__IO unsigned pin_4 :1;
-	__IO unsigned pin_3 :1;
-	__IO unsigned pin_2 :1;
-	__IO unsigned pin_1 :1;
-	__IO unsigned pin_0 :1;
+	__IO u16		dummy21	:10;
+	__IO u8			sdio_sel :6;	// SDIO-dis selection register
+	__IO unsigned	pin_15	:1;		// The output enable register.
+	__IO unsigned	pin_14	:1;
+	__IO unsigned	pin_13	:1;
+	__IO unsigned	pin_12	:1;
+	__IO unsigned	pin_11	:1;
+	__IO unsigned	pin_10	:1;
+	__IO unsigned	pin_9	:1;
+	__IO unsigned	pin_8	:1;
+	__IO unsigned	pin_7	:1;
+	__IO unsigned	pin_6	:1;
+	__IO unsigned	pin_5	:1;
+	__IO unsigned	pin_4	:1;
+	__IO unsigned	pin_3	:1;
+	__IO unsigned	pin_2	:1;
+	__IO unsigned	pin_1	:1;
+	__IO unsigned	pin_0	:1;
 } GPIO_enable_t;
 
 typedef struct
 {
-	__IO unsigned strap_pin_15 :1;
-	__IO unsigned strap_pin_14 :1;
-	__IO unsigned strap_pin_13 :1;
-	__IO unsigned strap_pin_12 :1;
-	__IO unsigned strap_pin_11 :1;
-	__IO unsigned strap_pin_10 :1;
-	__IO unsigned strap_pin_9 :1;
-	__IO unsigned strap_pin_8 :1;
-	__IO unsigned strap_pin_7 :1;
-	__IO unsigned strap_pin_6 :1;
-	__IO unsigned strap_pin_5 :1;
-	__IO unsigned strap_pin_4 :1;
-	__IO unsigned strap_pin_3 :1;
-	__IO unsigned strap_pin_2 :1;
-	__IO unsigned strap_pin_1 :1;
-	__IO unsigned strap_pin_0 :1;
-	__I unsigned pin_15 :1;
-	__I unsigned pin_14 :1;
-	__I unsigned pin_13 :1;
-	__I unsigned pin_12 :1;
-	__I unsigned pin_11 :1;
-	__I unsigned pin_10 :1;
-	__I unsigned pin_9 :1;
-	__I unsigned pin_8 :1;
-	__I unsigned pin_7 :1;
-	__I unsigned pin_6 :1;
-	__I unsigned pin_5 :1;
-	__I unsigned pin_4 :1;
-	__I unsigned pin_3 :1;
-	__I unsigned pin_2 :1;
-	__I unsigned pin_1 :1;
-	__I unsigned pin_0 :1;
+	__IO unsigned	strap_pin_15	:1;	// The values of the strapping pins.
+	__IO unsigned	strap_pin_14	:1;
+	__IO unsigned	strap_pin_13	:1;
+	__IO unsigned	strap_pin_12	:1;
+	__IO unsigned	strap_pin_11	:1;
+	__IO unsigned	strap_pin_10	:1;
+	__IO unsigned	strap_pin_9		:1;
+	__IO unsigned	strap_pin_8		:1;
+	__IO unsigned	strap_pin_7		:1;
+	__IO unsigned	strap_pin_6		:1;
+	__IO unsigned	strap_pin_5		:1;
+	__IO unsigned	strap_pin_4		:1;
+	__IO unsigned	strap_pin_3		:1;
+	__IO unsigned	strap_pin_2		:1;
+	__IO unsigned	strap_pin_1		:1;
+	__IO unsigned	strap_pin_0		:1;
+	__I unsigned	pin_15			:1;	// The values of the GPIO pins when the GPIO pin is set as input.
+	__I unsigned	pin_14			:1;
+	__I unsigned	pin_13			:1;
+	__I unsigned	pin_12			:1;
+	__I unsigned	pin_11			:1;
+	__I unsigned	pin_10			:1;
+	__I unsigned	pin_9			:1;
+	__I unsigned	pin_8			:1;
+	__I unsigned	pin_7			:1;
+	__I unsigned	pin_6			:1;
+	__I unsigned	pin_5			:1;
+	__I unsigned	pin_4			:1;
+	__I unsigned	pin_3			:1;
+	__I unsigned	pin_2			:1;
+	__I unsigned	pin_1			:1;
+	__I unsigned	pin_0			:1;
 } GPIO_in_t;
 
 typedef struct
 {
-	__IO u16 dummy :16;
-	__IO unsigned pin_15 :1;
-	__IO unsigned pin_14 :1;
-	__IO unsigned pin_13 :1;
-	__IO unsigned pin_12 :1;
-	__IO unsigned pin_11 :1;
-	__IO unsigned pin_10 :1;
-	__IO unsigned pin_9 :1;
-	__IO unsigned pin_8 :1;
-	__IO unsigned pin_7 :1;
-	__IO unsigned pin_6 :1;
-	__IO unsigned pin_5 :1;
-	__IO unsigned pin_4 :1;
-	__IO unsigned pin_3 :1;
-	__IO unsigned pin_2 :1;
-	__IO unsigned pin_1 :1;
-	__IO unsigned pin_0 :1;
+	__IO u16		dummy16	:16;
+	__IO unsigned	pin_15	:1;	// Interrupt enable register.
+	__IO unsigned	pin_14	:1;
+	__IO unsigned	pin_13	:1;
+	__IO unsigned	pin_12	:1;
+	__IO unsigned	pin_11	:1;
+	__IO unsigned	pin_10	:1;
+	__IO unsigned	pin_9	:1;
+	__IO unsigned	pin_8	:1;
+	__IO unsigned	pin_7	:1;
+	__IO unsigned	pin_6	:1;
+	__IO unsigned	pin_5	:1;
+	__IO unsigned	pin_4	:1;
+	__IO unsigned	pin_3	:1;
+	__IO unsigned	pin_2	:1;
+	__IO unsigned	pin_1	:1;
+	__IO unsigned	pin_0	:1;
 } GPIO_status_t;
 
 typedef enum _gpio_pin_source_t
 {
-	GPIO_DATA = 0,
-	SIGMA_DELTA = 1
+	GPIO_DATA	= 0,
+	SIGMA_DELTA	= 1
 } gpio_pin_source_t;
 
 typedef enum _gpio_pin_driver_t
 {
-	NORMAL = 0,
-	OPEN_DRAIN = 1
+	NORMAL		= 0,
+	OPEN_DRAIN	= 1
 } gpio_pin_driver_t;
 
 typedef enum _gpio_pin_int_t
 {
-	GPIO_INT_DISABLE = 0,
-	GPIO_INT_POS_EDGE = 1,
-	GPIO_INT_NEG_EDGE = 2,
-	GPIO_INT_ANY_EDGE = 3,
-	GPIO_INT_LOW_LEVEL = 4,
-	GPIO_INT_HIGH_LEVEL = 5
+	GPIO_INT_DISABLE	= 0,
+	GPIO_INT_POS_EDGE	= 1,
+	GPIO_INT_NEG_EDGE	= 2,
+	GPIO_INT_ANY_EDGE	= 3,
+	GPIO_INT_LOW_LEVEL	= 4,
+	GPIO_INT_HIGH_LEVEL	= 5
 } gpio_pin_int_t;
 
 typedef enum
@@ -492,37 +501,37 @@ typedef struct
 
 typedef struct
 {
-	__IO u32				dummy2			:19;
+	__IO u32				dummy13			:19;
 	__IO u8					config			:2;
-	__IO unsigned			wakeup_enable	:1;
-	__IO gpio_pin_int_t		pin_int			:3;
-	__IO u8					dummy1			:4;
-	__IO gpio_pin_driver_t	pin_driver		:1;
-	__IO unsigned			dummy			:1;
-	__IO gpio_pin_source_t	gpio_source		:1;
+	__IO unsigned			wakeup_enable	:1;	// 0: disable; 1: enable GPIO wakeup CPU, only when GPIO_PIN0_INT_TYPE is 0x4 or 0x5
+	__IO gpio_pin_int_t		pin_int			:3;	// 0: disable; 1: positive edge; 2: negative edge; 3: both types of edge; 4: low-level; 5: high-level
+	__IO u8					dummy3			:4;
+	__IO gpio_pin_driver_t	pin_driver		:1;	// 1: open drain; 0: normal
+	__IO unsigned			dummy1			:1;
+	__IO gpio_pin_source_t	gpio_source		:1;	// 1: sigma-delta; 0: GPIO_DATA
 } GPIO_pin_t;
 
 typedef struct
 {
-	__IO u16		dummy		:15;
-	__IO unsigned	enable		:1;
-	__IO u8			prescaler	:8;
-	__IO u8 		target		:8;
+	__IO u16		dummy17		:15;
+	__IO unsigned	enable		:1;	// 1: enable sigma-delta; 0: disable
+	__IO u8			prescaler	:8;	// Clock pre-divider for sigma-delta.
+	__IO u8 		target		:8;	// target level of the sigma-delta. It is a signed byte.
 } GPIO_sigma_delta_t;
 
 typedef struct
 {
-	__IO unsigned	rtc_calib_start	:1;
-	__IO u32		dummy			:21;
-	__IO u16		rtc_period_num	:10;
+	__IO unsigned	rtc_calib_start	:1;		// Positvie edge of this bit will trigger the RTC-clock-calibration process.
+	__IO u32		dummy10			:21;
+	__IO u16		rtc_period_num	:10;	// The cycle number of RTC-clock during RTC-clock-calibration
 } GPIO_rtc_calib_sync_t;
 
 typedef struct
 {
-	__I unsigned	calib_rdy		:1;
-	__I unsigned	calib_rdy_real	:1;
-	__I u16			dummy			:10;
-	__I u32			rtc_calib_value	:20;
+	__I unsigned	calib_rdy		:1;	// 0: during RTC-clock-calibration; 1: RTC-clock-calibration is done
+	__I unsigned	calib_rdy_real	:1;	// 0: during RTC-clock-calibration; 1: RTC-clock-calibration is done
+	__I u16			dummy20			:10;
+	__I u32			rtc_calib_value	:20;	// The cycle number of clk_xtal (crystal clock) for the RTC_PERIOD_NUM cycles of RTC-clock
 } GPIO_rtc_calib_value_t;
 
 typedef struct GPIO_struct
@@ -530,52 +539,52 @@ typedef struct GPIO_struct
 	union
 	{
 		__IO u32			out;
-		__IO GPIO_out_t 	out_bits;
+		__IO GPIO_out_t 	out_bits;	// The output value when the GPIO pin is set as output.
 	};
 	union
 	{
 		__O u32				out_w1ts;
-		__O GPIO_out_w_t	out_w1ts_bits;
+		__O GPIO_out_w_t	out_w1ts_bits;	// Writing 1 into a bit in this register will set the related bit in GPIO_OUT_DATA
 	};
 	union
 	{
 		__O u32				out_w1tc;
-		__O GPIO_out_w_t	out_w1tc_bits;
+		__O GPIO_out_w_t	out_w1tc_bits;	// Writing 1 into a bit in this register will clear the related bit in GPIO_OUT_DATA
 	};
 	union
 	{
 		__IO u32			enable;
-		__IO GPIO_enable_t	enable_bits;
+		__IO GPIO_enable_t	enable_bits;	// The output enable register.
 	};
 	union
 	{
 		__O u32				enable_w1ts;
-		__O GPIO_out_w_t	enable_w1ts_bits;
+		__O GPIO_out_w_t	enable_w1ts_bits;	// Writing 1 into a bit in this register will set the related bit in GPIO_ENABLE_DATA
 	};
 	union
 	{
 		__O u32				enable_w1tc;
-		__O GPIO_out_w_t	enable_w1tc_bits;
+		__O GPIO_out_w_t	enable_w1tc_bits;	// Writing 1 into a bit in this register will clear the related bit in GPIO_ENABLE_DATA
 	};
 	union
 	{
 		__IO u32			in;
-		__IO GPIO_in_t		in_bits;
+		__IO GPIO_in_t		in_bits;	// The values of the GPIO pins when the GPIO pin is set as input.
 	};
 	union
 	{
 		__IO u32			status;
-		__IO GPIO_status_t	status_bits;
+		__IO GPIO_status_t	status_bits;	// Interrupt enable register.
 	};
 	union
 	{
 		__O u32				status_w1ts;
-		__O GPIO_out_w_t	status_w1ts_bits;
+		__O GPIO_out_w_t	status_w1ts_bits;	// Writing 1 into a bit in this register will set the related bit in GPIO_STATUS_INTERRUPT
 	};
 	union
 	{
 		__O u32				status_w1tc;
-		__O GPIO_out_w_t	statust_w1tc_bits;
+		__O GPIO_out_w_t	statust_w1tc_bits;	// Writing 1 into a bit in this register will clear the related bit in GPIO_STATUS_INTERRUPT
 	};
 	union
 	{

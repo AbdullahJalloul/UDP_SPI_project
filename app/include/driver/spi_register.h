@@ -1,7 +1,7 @@
 /*
  *  Copyright (c) 2010 - 2011 Espressif System
- *  Added on: 17 ��� 2016 �.
- *      Author: ���� ��������
+ *  Added on: 17.05.2016
+ *      Author: Ilya Petrukhin
  *
  */
 
@@ -201,267 +201,388 @@
 #define     __O     volatile         /*!< defines 'write only' permissions    */
 #define     __IO    volatile         /*!< defines 'read / write' permissions  */
 
-
-// �������� ������� �����
+/**************** SPI Defined bit fields **************************************/
+// Р±РёС‚РѕРІС‹Рµ РїРѕР»СЏ
 typedef struct
 {
-	unsigned	flash_read		:1;
-	unsigned	flash_wren		:1;
-	unsigned	flash_wrdi		:1;
-	unsigned	flash_rdid		:1;
-	unsigned	flash_rdsr		:1;
-	unsigned	flash_wrsr		:1;
-	unsigned	flash_pp		:1;
-	unsigned	flash_se		:1;
-	unsigned	flash_be		:1;
-	unsigned	flash_ce		:1;
-	unsigned	dummy1			:1;
-	unsigned	flash_res		:1;
-	unsigned	dummy2			:1;
-	unsigned	usr				:1;
-	u32			dummy3			:18;
+	__IO unsigned	flash_read		:1;
+	__IO unsigned	flash_wren		:1;
+	__IO unsigned	flash_wrdi		:1;
+	__IO unsigned	flash_rdid		:1;
+	__IO unsigned	flash_rdsr		:1;
+	__IO unsigned	flash_wrsr		:1;
+	__IO unsigned	flash_pp		:1;
+	__IO unsigned	flash_se		:1;
+	__IO unsigned	flash_be		:1;
+	__IO unsigned	flash_ce		:1;
+	__IO unsigned	flash_dp		:1;
+	__IO unsigned	flash_res		:1;
+	__IO unsigned	flash_hpm		:1;
+	__IO unsigned	usr				:1;	// spi module busy - transmission start
+	__IO u32		dummy			:18;
 } SPI_cmd_t;
 
 typedef struct
 {
-	u8			dummy3			:5;
-	unsigned	wr_bit_order	:1;
-	unsigned	rd_bit_order	:1;
-	unsigned	qio_mode		:1;
-	unsigned	dio_mode		:1;
-	u8			dummy2			:2;
-	unsigned	qout_mode		:1;
-	u8			dummy1			:5;
-	unsigned	dout_mode		:1;
-	unsigned	fastrd_mode		:1;
-	u16			dummy			:13;
+	__IO u8			dummy3			:5;
+	__IO unsigned	wr_bit_order	:1;
+	__IO unsigned	rd_bit_order	:1;
+	__IO unsigned	qio_mode		:1;
+	__IO unsigned	dio_mode		:1;
+	__IO unsigned	two_byte_status_en	:1;
+	__IO unsigned	wp_reg			:1;
+	__IO unsigned	qout_mode		:1;
+	__IO unsigned	share_bus		:1;
+	__IO unsigned	hold_mode		:1;
+	__IO unsigned	enable_ahb		:1;
+	__IO unsigned	sst_aai			:1;
+	__IO unsigned	res_and_res		:1;
+	__IO unsigned	dout_mode		:1;
+	__IO unsigned	fastrd_mode		:1;
+	__IO u16		dummy			:13;
 } SPI_ctrl_t;
 
 typedef struct
 {
-	u8	cs_hold_delay		:4;
-	u16	cs_hold_delay_res	:12;
-	u16	dummy				:16;
+	__IO u8		cs_hold_delay		:4;
+	__IO u16	cs_hold_delay_res	:12;
+	__IO u16	bus_timer_limit		:16;
 } SPI_ctrl1_t;
+
 
 typedef struct
 {
-	u8	cs_delay_num	:4;
-	u8	cs_delay_mode	:2;
-	u8	mosi_delay_num	:3;
-	u8	mosi_delay_mode	:2;
-	u8	miso_delay_num	:3;
-	u8	miso_delay_mode	:2;
-	u16	dummy :16;
+	__IO u8			status_ext			:8;
+	__IO u8			wb_mode				:8;
+	__IO u8			dummy8				:8;
+	__IO unsigned	status_pro_flag		:1;
+	__IO unsigned	dummy6				:1;
+	__IO unsigned	top_bot_pro_flag	:1;
+	__IO unsigned	bp2					:1;
+	__IO unsigned	bp1					:1;
+	__IO unsigned	bp0					:1;
+	__IO unsigned	wr_enable_flag		:1;
+	__IO unsigned	busy_flag			:1;	
+} SPI_flash_status_t;
+
+typedef struct
+{
+	__IO u8	cs_delay_num		:4;
+	__IO u8	cs_delay_mode		:2;
+	__IO u8	mosi_delay_num		:3;
+	__IO u8	mosi_delay_mode		:2;
+	__IO u8	miso_delay_num		:3;
+	__IO u8	miso_delay_mode		:2;
+	__IO u8	cl_out_high_mode	:4;
+	__IO u8	ck_out_low_mode		:4;
+	__IO u8	hold_time			:4;
+	__IO u8	setup_time			:4;
 } SPI_ctrl2_t;
 
 typedef struct
 {
-	unsigned	equ_sysclk	:1;
-	u16			pre_s		:13;
-	u8			clkcnt_n	:6;
-	u8			clkcnt_h	:6;
-	u8			clkcnt_l	:6;
+	__IO unsigned	equ_sysclk	:1;
+	__IO u16		pre_s		:13;
+	__IO u8			clkcnt_n	:6;
+	__IO u8			clkcnt_h	:6;
+	__IO u8			clkcnt_l	:6;
 } SPI_clock_t;
 
 typedef struct
 {
-	unsigned	command			:1;
-	unsigned	addr			:1;
-	unsigned	dummy			:1;
-	unsigned	miso			:1;
-	unsigned	mosi			:1;
-	unsigned	dummy1			:1;
-	unsigned	mosi_highpart	:1;
-	unsigned	miso_highpart	:1;
-	u8			dummy2			:7;
-	unsigned	sio				:1;
-	unsigned	fwrite_qio		:1;
-	unsigned	fwrite_dio		:1;
-	unsigned	fwrite_quad		:1;
-	unsigned	fwrite_dual		:1;
-	unsigned	wr_byte_order	:1;
-	unsigned	rd_byte_order	:1;
-	u8			dummy3			:2;
-	unsigned	ck_out_edge		:1;
-	unsigned	ck_i_edge		:1;
-	unsigned	cs_setup		:1;
-	unsigned	cs_hold			:1;
-	unsigned	dummy4			:1;
-	unsigned	flash_mode		:1;
-	unsigned	dummy5			:1;
-	unsigned	usr_dout_din	:1;
+	__IO unsigned	command			:1;
+	__IO unsigned	addr			:1;
+	__IO unsigned	dummy			:1;
+	__IO unsigned	miso			:1;
+	__IO unsigned	mosi			:1;
+	__IO unsigned	dummy_idle		:1;
+	__IO unsigned	mosi_highpart	:1;
+	__IO unsigned	miso_highpart	:1;
+	__IO unsigned	prep_hold		:1;
+	__IO unsigned	cmd_hold		:1;
+	__IO unsigned	addr_hold		:1;
+	__IO unsigned	dummy_hold		:1;
+	__IO unsigned	miso_hold		:1;
+	__IO unsigned	mosi_hold		:1;
+	__IO unsigned	hold_pol		:1;
+	__IO unsigned	sio				:1;
+	__IO unsigned	fwrite_qio		:1;
+	__IO unsigned	fwrite_dio		:1;
+	__IO unsigned	fwrite_quad		:1;
+	__IO unsigned	fwrite_dual		:1;
+	__IO unsigned	wr_byte_order	:1;
+	__IO unsigned	rd_byte_order	:1;
+	__IO u8			ahb_endian_mode	:2;
+	__IO unsigned	ck_out_edge		:1;
+	__IO unsigned	ck_i_edge		:1;
+	__IO unsigned	cs_setup		:1;
+	__IO unsigned	cs_hold			:1;
+	__IO unsigned	ahb_usr_command	:1;
+	__IO unsigned	flash_mode		:1;
+	__IO unsigned	ahb_usr_command_4byte	:1;
+	__IO unsigned	usr_dout_din	:1;
 } SPI_user_t;
 
 typedef struct
 {
-	u8	addr_bitlen 	:6;
-	u16	mosi_bitlen 	:9;
-	u16	miso_bitlen 	:9;
-	u8	dummy_cyclelen	:8;
+	__IO u8		addr_bitlen 	:6;
+	__IO u16	mosi_bitlen 	:9;		// bit 17-25 stores MOSI bit length value
+	__IO u16	miso_bitlen 	:9;		// bit 8-16 stores MISO bit length value
+	__IO u8		dummy_cyclelen	:8;
 } SPI_user1_t;
 
 typedef struct
 {
-	u8	command_bitlen	:4;
-	u16	dummy			:12;
-	u16	command_value	:16;
+	__IO u8		command_bitlen	:4;		// bit28-31 is cmd length, cmd bit length is value(0-15)+1,
+	__IO u16	dummy			:12;
+	__IO u16	command_value	:16;	// bit15-0 is cmd value.
 } SPI_user2_t;
 
 typedef struct
 {
-	u32	dummy			:29;
-	unsigned	cs2_dis	:1;
-	unsigned	cs1_dis	:1;
-	unsigned	cs0_dis	:1;
+	__IO u32		dummy	:29;
+	__IO unsigned	cs2_dis	:1;
+	__IO unsigned	cs1_dis	:1;
+	__IO unsigned	cs0_dis	:1;
 } SPI_pin_t;
 
 typedef struct
 {
-	u8	dummy1			:5;
-	u8	trans_cnt		:4;
-	u16	dummy2			:13;
-	u8	spi_int_en		:5;
-	u8	spi_int_status	:5;
+	__IO unsigned	sync_reset			:1;
+	__IO unsigned	slave_mode			:1;
+	__IO unsigned	slv_wr_rd_buf_en	:1;
+	__IO unsigned	slv_wr_rd_sta_en	:1;
+	__IO unsigned	slv_cmd_define		:1;
+	__IO u8			trans_cnt			:4;
+	__IO u8			slv_last_state		:3;
+	__IO u8			slv_last_command	:3;
+	__IO u8			dummy12				:5;
+	__IO u8			cs_i_mode			:2;
+	__IO u8			int_en				:5;
+	__IO unsigned	trans_done			:1;
+	__IO unsigned	slv_wr_sta_done		:1;
+	__IO unsigned	slv_rd_sta_done		:1;
+	__IO unsigned	slv_wr_buf_done		:1;
+	__IO unsigned	slv_rd_buf_done		:1;
 } SPI_slave_t;
 
 typedef struct
 {
-	u8	status_bitlen	:5;
-	u8	dummy1			:2;
-	u16	buf_bitlen		:9;
-	u8	rd_addr_bitlen	:6;
-	u8	wr_addr_bitlen	:6;
-	u8	dummy2			:4;
+	__IO u8			status_bitlen		:5;
+	__IO unsigned	slv_status_fast_en	:1;
+	__IO unsigned	slv_status_readback	:1;
+	__IO u16			buf_bitlen		:9;
+	__IO u8			rd_addr_bitlen		:6;
+	__IO u8			wr_addr_bitlen		:6;
+	__IO unsigned	slv_wrsta_dummy_en	:1;
+	__IO unsigned	slv_rdsta_dummy_en	:1;
+	__IO unsigned	slv_wrbuf_dummy_en	:1;
+	__IO unsigned	slv_rdbuf_dummy_en	:1;
 } SPI_slave1_t;
 
 typedef struct
 {
-	u8	wrbuf_dummy_cyclelen	:8;
-	u8	rdbuf_dummy_cyclelen	:8;
-	u8	wrsta_dummy_cyclelen	:8;
-	u8	rdsta_dummy_cyclelen	:8;
+	__IO u8	wrbuf_dummy_cyclelen	:8;
+	__IO u8	rdbuf_dummy_cyclelen	:8;
+	__IO u8	wrsta_dummy_cyclelen	:8;
+	__IO u8	rdsta_dummy_cyclelen	:8;
 } SPI_slave2_t;
 
 typedef struct
 {
-	u8	wrsta_cmd_value :8;
-	u8	rdsta_cmd_value :8;
-	u8	wrbuf_cmd_value :8;
-	u8	rdbuf_cmd_value :8;
+	__IO u8	wrsta_cmd_value 	:8;
+	__IO u8	rdsta_cmd_value 	:8;
+	__IO u8	wrbuf_cmd_value 	:8;
+	__IO u8	rdbuf_cmd_value 	:8;
 } SPI_slave3_t;
+
+typedef struct
+{
+	__IO unsigned	t_pp_ena	:1;
+	__IO u16		dummy20		:11;
+	__IO u8			pp_shift	:4;
+	__IO u8			dummy12		:4;
+	__IO u16		t_pp_time	:12;
+} SPI_ext0_t;
+
+typedef struct
+{
+	__IO unsigned	erase_ena	:1;
+	__IO u16		dummy20		:11;
+	__IO u8			erase_shift	:4;
+	__IO u8			dummy12		:4;
+	__IO u16		erase_time	:12;
+} SPI_ext1_t;
+
+typedef struct
+{
+	__IO u32	dummy2			:29;
+	__IO u8		st				:3;
+} SPI_ext2_t;
+
+typedef struct
+{
+	__IO u32	dummy1			:30;
+	__IO u8		int_hold_ena	:2;
+} SPI_ext3_t;
+
+/************** Define SPI struct *********************************************/
 
 typedef struct SPI_struct
 {
 	union
 	{
-		__IO u32			spi_cmd;
-		__IO SPI_cmd_t		spi_cmd_bits;
+		__IO u32			cmd;
+		__IO SPI_cmd_t		cmd_bits;
 	};
-	__IO u32 spi_addr;
+	__IO u32 addr;
 	union
 	{
-		__IO u32			spi_ctrl;
-		__IO SPI_ctrl_t		spi_ctrl_bits;
-	};
-	union
-	{
-		__IO u32			spi_ctrl1;
-		__IO SPI_ctrl1_t	spi_ctrl1_bits;
-	};
-	__IO u32 spi_rd_status;
-	union
-	{
-		__IO u32			spi_ctrl2;
-		__IO SPI_ctrl2_t	spi_ctrl2_bits;
+		__IO u32			ctrl;
+		__IO SPI_ctrl_t		ctrl_bits;
 	};
 	union
 	{
-		__IO u32			spi_clock;
-		__IO SPI_clock_t	spi_clock_bits;
+		__IO u32			ctrl1;
+		__IO SPI_ctrl1_t	ctrl1_bits;
 	};
 	union
 	{
-		__IO u32			spi_user;
-		__IO SPI_user_t		spi_user_bits;
+		__IO u32				rd_status;
+		__IO SPI_flash_status_t	rd_status_bits;
 	};
 	union
 	{
-		__IO u32			spi_user1;
-		__IO SPI_user1_t	spi_user1_bits;
+		__IO u32			ctrl2;
+		__IO SPI_ctrl2_t	ctrl2_bits;
 	};
 	union
 	{
-		__IO u32			spi_user2;
-		__IO SPI_user2_t	spi_user2_bits;
-	};
-	__IO u32 spi_wr_status;
-	union
-	{
-		__IO u32			spi_pin;
-		__IO SPI_pin_t		spi_pin_bits;
+		__IO u32			clock;
+		__IO SPI_clock_t	clock_bits;
 	};
 	union
 	{
-		__IO u32			spi_slave;
-		__IO SPI_slave_t	spi_slave_bits;
+		__IO u32			user;
+		__IO SPI_user_t		user_bits;
 	};
 	union
 	{
-		__IO u32			spi_slave1;
-		__IO SPI_slave1_t	spi_slave1_bits;
+		__IO u32			user1;
+		__IO SPI_user1_t	user1_bits;
 	};
 	union
 	{
-		__IO u32			spi_slave2;
-		__IO SPI_slave2_t	spi_slave2_bits;
+		__IO u32			user2;
+		__IO SPI_user2_t	user2_bits;
 	};
 	union
 	{
-		__IO u32			spi_slave3;
-		__IO SPI_slave3_t	spi_slave3_bits;
-	};
-	__IO u32 spi_w0;
-	__IO u32 spi_w1;
-	__IO u32 spi_w2;
-	__IO u32 spi_w3;
-	__IO u32 spi_w4;
-	__IO u32 spi_w5;
-	__IO u32 spi_w6;
-	__IO u32 spi_w7;
-	__IO u32 spi_w8;
-	__IO u32 spi_w9;
-	__IO u32 spi_w10;
-	__IO u32 spi_w11;
-	__IO u32 spi_w12;
-	__IO u32 spi_w13;
-	__IO u32 spi_w14;
-	__IO u32 spi_w15;
-} SPI_TypeDef;
+		__IO u32 wr_status;
 
-typedef struct _SPI_ext_typedef
-{
-	__IO u32 spi_ext_0;
-	__IO u32 spi_ext_1;
-	__IO u32 spi_ext_2;
-	__IO u32 spi_ext_3;	
-} SPI_ext_typedef;
+	};
+	__IO u32 wr_status;
+	union
+	{
+		__IO u32			pin;
+		__IO SPI_pin_t		pin_bits;
+	};
+	union
+	{
+		__IO u32			slave;
+		__IO SPI_slave_t	slave_bits;
+	};
+	union
+	{
+		__IO u32			slave1;
+		__IO SPI_slave1_t	slave1_bits;
+	};
+	union
+	{
+		__IO u32			slave2;
+		__IO SPI_slave2_t	slave2_bits;
+	};
+	union
+	{
+		__IO u32			slave3;
+		__IO SPI_slave3_t	slave3_bits;
+	};
+	__IO u32 w0;
+	__IO u32 w1;
+	__IO u32 w2;
+	__IO u32 w3;
+	__IO u32 w4;
+	__IO u32 w5;
+	__IO u32 w6;
+	__IO u32 w7;
+	__IO u32 w8;
+	__IO u32 w9;
+	__IO u32 w10;
+	__IO u32 w11;
+	__IO u32 w12;
+	__IO u32 w13;
+	__IO u32 w14;
+	__IO u32 w15;
+	__IO u32 dummy80;
+	__IO u32 dummy84;
+	__IO u32 dummy88;
+	__IO u32 dummy8C;
+	__IO u32 dummy90;
+	__IO u32 dummy94;
+	__IO u32 dummy98;
+	__IO u32 dummy9C;
+	__IO u32 dummyA0;
+	__IO u32 dummyA4;
+	__IO u32 dummyA8;
+	__IO u32 dummyAC;
+	__IO u32 dummyB0;
+	__IO u32 dummyB4;
+	__IO u32 dummyB8;
+	__IO u32 dummyBC;
+	__IO u32 dummyC0;
+	__IO u32 dummyC4;
+	__IO u32 dummyC8;
+	__IO u32 dummyCC;
+	__IO u32 dummyD0;
+	__IO u32 dummyD4;
+	__IO u32 dummyD8;
+	__IO u32 dummyDC;
+	__IO u32 dummyE0;
+	__IO u32 dummyE4;
+	__IO u32 dummyE8;
+	__IO u32 dummyEC;
+	union
+	{
+		__IO u32		ext_0;
+		__IO SPI_ext0_t	ext0_bits;
+	};
+	union
+	{
+		__IO u32		ext_1;
+		__IO SPI_ext1_t	ext1_bits;
+	};
+	union
+	{
+		__IO u32		ext_2;
+		__IO SPI_ext2_t	ext2_bits;
+	};
+	union
+	{
+		__IO u32		ext_3;
+		__IO SPI_ext3_t	ext3_bits;
+	};
+} SPI_TypeDef;
 
 #define SPI0_BaseAddress			0x60000200
 #define SPI1_BaseAddress			0x60000100
 
-#define	SPI0_ext_base_address		0x600002F0
-#define	SPI1_ext_base_address		0x600001F0
-
 #define SPI0 		((SPI_TypeDef *) SPI0_BaseAddress)
 #define SPI1 		((SPI_TypeDef *) SPI1_BaseAddress)
-
-#define SPI0EXT		((SPI_ext_typedef *) SPI0_ext_base_address)
-#define SPI1EXT		((SPI_ext_typedef *) SPI1_ext_base_address)
 
 //#define SPI 		((SPI_TypeDef *) SPI0_BaseAddress)
 //#define HSPI		((SPI_TypeDef *) SPI1_BaseAddress)
 
+/***************** define registers reset value *******************************/
 
 #define SPI_CMD_RESET_VALUE			((u32)0x00000000)
 #define SPI_ADDR_RESET_VALUE		((u32)0x00000000)
@@ -496,7 +617,8 @@ typedef struct _SPI_ext_typedef
 #define SPI_W14_RESET_VALUE			((u32)0x00000000)
 #define SPI_W15_RESET_VALUE			((u32)0x00000000)
 
-// ������� ����� � ���������
+/******************* define SPI bit masks *************************************/ 
+
 #define SPI_CMD_FLASH_READ			BIT31
 #define SPI_CMD_FLASH_WREN			BIT30
 #define SPI_CMD_FLASH_WRDI			BIT29

@@ -42,13 +42,13 @@ void ICACHE_FLASH_ATTR spi_master_init (void)
 	pin_func_select (PERIPHS_IO_MUX_MTMS_U, 2);//configure io14 to Hspi_clk mode
 	pin_func_select (PERIPHS_IO_MUX_MTDO_U, 2);//configure io15 to Hspi_cs mode
 
-	SPI1->spi_user |= SPI_USER_CS_SETUP | SPI_USER_CS_HOLD | SPI_USER_COMMAND;
-	SPI1->spi_user &= ~SPI_USER_FLASH_MODE;
-	SPI1->spi_clock_bits.equ_sysclk = 0;
-	SPI1->spi_clock_bits.pre_s = SPI_PREDIV_CLK;
-	SPI1->spi_clock_bits.clkcnt_n = SPI_DIV_CLK_N;
-	SPI1->spi_clock_bits.clkcnt_h = SPI_DIV_CLK_H;
-	SPI1->spi_clock_bits.clkcnt_l = SPI_DIV_CLK_L;
+	SPI1->user |= SPI_USER_CS_SETUP | SPI_USER_CS_HOLD | SPI_USER_COMMAND;
+	SPI1->user &= ~SPI_USER_FLASH_MODE;
+	SPI1->clock_bits.equ_sysclk = 0;
+	SPI1->clock_bits.pre_s = SPI_PREDIV_CLK;
+	SPI1->clock_bits.clkcnt_n = SPI_DIV_CLK_N;
+	SPI1->clock_bits.clkcnt_h = SPI_DIV_CLK_H;
+	SPI1->clock_bits.clkcnt_l = SPI_DIV_CLK_L;
 
 	/*	SET_PERI_REG_MASK (SPI_USER (HSPI),
 	 SPI_CS_SETUP | SPI_CS_HOLD | SPI_USR_COMMAND);
@@ -75,8 +75,7 @@ void spi_req_intr_init(void)
 /******************************************************************************
  * FunctionName : spi_lcd_9bit_write
  * Description  : SPI 9bits transmission function for driving LCD TM035PDZV36
- * Parameters   : 	uint8 1 - SPI module number, Only "SPI" and "HSPI" are valid
- *				uint8 high_bit - first high bit of the data, 0 is for "0", the other value 1-255 is for "1"
+ * Parameters   : uint8 high_bit - first high bit of the data, 0 is for "0", the other value 1-255 is for "1"
  *				uint8 low_8bit- the rest 8bits of the data.
  *******************************************************************************/
 void ICACHE_FLASH_ATTR spi_lcd_9bit_write (uint8 high_bit, uint8 low_8bit)
@@ -92,9 +91,12 @@ void ICACHE_FLASH_ATTR spi_lcd_9bit_write (uint8 high_bit, uint8 low_8bit)
 	{
 		regvalue |= BIT15;		//write the 9th bit
 	}
-	while (READ_PERI_REG (SPI_CMD (HSPI)) & SPI_USR);//waiting for spi module available
-	WRITE_PERI_REG (SPI_USER2 (HSPI), regvalue);//write  command and command length into spi reg
-	SET_PERI_REG_MASK (SPI_CMD (HSPI), SPI_USR);//transmission start
+//	while (READ_PERI_REG (SPI_CMD (HSPI)) & SPI_USR);
+	while (SPI1->cmd_bits.usr);	//waiting for spi module available
+//	WRITE_PERI_REG (SPI_USER2 (HSPI), regvalue);
+	SPI1->user2 = regvalue;		//write  command and command length into spi reg
+//	SET_PERI_REG_MASK (SPI_CMD (HSPI), SPI_USR);
+	SPI1->cmd_bits.usr = 1;	// transmission start
 	//	while(READ_PERI_REG (SPI_CMD (HSPI)) & SPI_USR);
 }
 
@@ -107,21 +109,23 @@ void ICACHE_FLASH_ATTR spi_mast_byte_write (uint8 data)
 {
 	uint32 regvalue;
 
-	while (READ_PERI_REG (SPI_CMD(HSPI)) & SPI_USR)
-	{
-	}
-	CLEAR_PERI_REG_MASK (SPI_USER (HSPI), SPI_USR_MOSI | SPI_USR_MISO);	// ��������� ������ � ������
+	while (SPI1->cmd_bits.usr);	//waiting for spi module available
 
-	SET_PERI_REG_MASK (SPI_USER (HSPI), SPI_USR_COMMAND);
-
+//	CLEAR_PERI_REG_MASK (SPI_USER (HSPI), SPI_USR_MOSI | SPI_USR_MISO);	// ��������� ������ � ������
+	SPI1->user &= ~(SPI_USER_MISO | SPI_USER_MOSI);
+//	SET_PERI_REG_MASK (SPI_USER (HSPI), SPI_USR_COMMAND);
+	SPI1->user_bits.command = 1;
 	//SPI_FLASH_USER2 bit28-31 is cmd length, cmd bit length is value(0-15)+1,
 	// bit15-0 is cmd value.
-	WRITE_PERI_REG (SPI_USER2 (HSPI),
+/*	WRITE_PERI_REG (SPI_USER2 (HSPI),
 			((7 & SPI_USR_COMMAND_BITLEN) << SPI_USR_COMMAND_BITLEN_S)
 			| ((uint32) data));
-	SET_PERI_REG_MASK (SPI_CMD(HSPI), SPI_USR);
-	while (READ_PERI_REG (SPI_CMD(HSPI)) & SPI_USR)
-	;
+*/
+	SPI1->user2_bits.command_bitlen = 7;
+	SPI1->user2_bits.command_value = data;
+//	SET_PERI_REG_MASK (SPI_CMD(HSPI), SPI_USR);
+	SPI1->cmd_bits.usr = 1;	// transmission start
+//	while (READ_PERI_REG (SPI_CMD(HSPI)) & SPI_USR);
 
 }
 
@@ -135,29 +139,29 @@ void ICACHE_FLASH_ATTR spi_mast_byte_write (uint8 data)
  *******************************************************************************/
 void ICACHE_FLASH_ATTR spi_byte_write_espslave (uint8 data)
 {
-	uint32 regvalue;
-
-	while (READ_PERI_REG (SPI_CMD(HSPI)) & SPI_USR);
-	SET_PERI_REG_MASK (SPI_USER(HSPI), SPI_USR_MOSI|SPI_USR_COMMAND);
-	CLEAR_PERI_REG_MASK (SPI_USER(HSPI), SPI_USR_MISO|SPI_USR_ADDR|SPI_USR_DUMMY);
-
+	while (SPI1->cmd_bits.usr);	//waiting for spi module available
+	SPI1->user |= SPI_USER_MOSI | SPI_USER_COMMAND;
+	SPI1->user &= (SPI_USER_MISO | SPI_USER_ADDR | SPI_USER_DUMMY);
+	SPI1->user2_bits.command_bitlen = 7;
+	SPI1->user2_bits.command_value = 0x04;
+	SPI1->user1_bits.mosi_bitlen = 7;
+	SPI1->w0 = data;
+	SPI1->cmd_bits.usr = 1;	// transmission start
+	
+//	SET_PERI_REG_MASK (SPI_USER(HSPI), SPI_USR_MOSI|SPI_USR_COMMAND);
+//	CLEAR_PERI_REG_MASK (SPI_USER(HSPI), SPI_USR_MISO|SPI_USR_ADDR|SPI_USR_DUMMY);
 	//SPI_FLASH_USER2 bit28-31 is cmd length, cmd bit length is value(0-15)+1,
 	// bit15-0 is cmd value.
 	//0x70000000 is for 8bits cmd, 0x04 is eps8266 slave write cmd value
-	WRITE_PERI_REG (SPI_USER2(HSPI),
-			((7 & SPI_USR_COMMAND_BITLEN) << SPI_USR_COMMAND_BITLEN_S) | 4);
-
+//	WRITE_PERI_REG (SPI_USER2(HSPI), ((7 & SPI_USR_COMMAND_BITLEN) << SPI_USR_COMMAND_BITLEN_S) | 4);
 	//in register SPI_FLASH_USER1, bit 8-16 stores MOSI bit length value
 	//The value shall be (bit_num-1).
 	//for example, we WRITE 1 byte data which has length of 8 bits,
 	//therefore the MOSI bit length value of 7 should be written into the related register bits.
-	WRITE_PERI_REG (SPI_USER1(HSPI), ((7 & SPI_USR_MOSI_BITLEN) << SPI_USR_MOSI_BITLEN_S));
-
-	WRITE_PERI_REG (SPI_W0(HSPI), (uint32)(data));
-
-	SET_PERI_REG_MASK (SPI_CMD(HSPI), SPI_USR);
-
-	while(READ_PERI_REG (SPI_CMD(HSPI)) & SPI_USR);
+//	WRITE_PERI_REG (SPI_USER1(HSPI), ((7 & SPI_USR_MOSI_BITLEN) << SPI_USR_MOSI_BITLEN_S));
+//	WRITE_PERI_REG (SPI_W0(HSPI), (uint32)(data));
+//	SET_PERI_REG_MASK (SPI_CMD(HSPI), SPI_USR);
+//	while(READ_PERI_REG (SPI_CMD(HSPI)) & SPI_USR);
 }
 /******************************************************************************
  * FunctionName : spi_byte_read_espslave
@@ -169,27 +173,31 @@ void ICACHE_FLASH_ATTR spi_byte_write_espslave (uint8 data)
 void ICACHE_FLASH_ATTR spi_byte_read_espslave (uint8 *data)
 {
 	uint32 regvalue;
-	while (READ_PERI_REG (SPI_CMD(HSPI)) & SPI_USR);
+	while (SPI1->cmd_bits.usr);	//waiting for spi module available
 
-	SET_PERI_REG_MASK (SPI_USER (HSPI), SPI_USR_MISO|SPI_USR_COMMAND);
-	CLEAR_PERI_REG_MASK (SPI_USER (HSPI), SPI_USR_MOSI|SPI_USR_ADDR|SPI_USR_DUMMY);
+//	SET_PERI_REG_MASK (SPI_USER (HSPI), SPI_USR_MISO|SPI_USR_COMMAND);
+	SPI1->user |= SPI_USER_MISO | SPI_USER_COMMAND;
+	SPI1->user &= ~(SPI_USER_MOSI | SPI_USER_ADDR | SPI_USER_DUMMY);
+//	CLEAR_PERI_REG_MASK (SPI_USER (HSPI), SPI_USR_MOSI|SPI_USR_ADDR|SPI_USR_DUMMY);
 	//SPI_FLASH_USER2 bit28-31 is cmd length, cmd bit length is value(0-15)+1,
 	// bit15-0 is cmd value.
 	//0x70000000 is for 8bits cmd, 0x06 is eps8266 slave read cmd value
-	WRITE_PERI_REG (SPI_USER2 (HSPI),
-			((7 & SPI_USR_COMMAND_BITLEN) << SPI_USR_COMMAND_BITLEN_S) | 6);
-
+//	WRITE_PERI_REG (SPI_USER2 (HSPI), ((7 & SPI_USR_COMMAND_BITLEN) << SPI_USR_COMMAND_BITLEN_S) | 6);
+	SPI1->user2_bits.command_bitlen = 7;
+	SPI1->user2_bits.command_value = 0x06;
 	//in register SPI_FLASH_USER1, bit 8-16 stores MOSI bit length value
 	//The value shall be (bit_num-1).
 	//for example, we READ 1 byte data which has length of 8 bits,
 	//therefore the MISO bit length value of 7 should be written into the related register bits.
-	WRITE_PERI_REG (SPI_USER1 (HSPI), ((7 & SPI_USR_MISO_BITLEN) << SPI_USR_MISO_BITLEN_S));
-
-	SET_PERI_REG_MASK (SPI_CMD (HSPI), SPI_USR);
-
-	while(READ_PERI_REG (SPI_CMD (HSPI)) & SPI_USR);
-
-	*data = (uint8)(READ_PERI_REG (SPI_W0 (HSPI)) & 0xff);
+//	WRITE_PERI_REG (SPI_USER1 (HSPI), ((7 & SPI_USR_MISO_BITLEN) << SPI_USR_MISO_BITLEN_S));
+	SPI1->user1_bits.miso_bitlen = 7;
+	
+//	SET_PERI_REG_MASK (SPI_CMD (HSPI), SPI_USR);
+	SPI1->cmd_bits.usr = 1;	// transmission start
+//	while(READ_PERI_REG (SPI_CMD (HSPI)) & SPI_USR);
+	while (SPI1->cmd_bits.usr);	//waiting for spi module available
+//	*data = (uint8)(READ_PERI_REG (SPI_W0 (HSPI)) & 0xff);
+	*data = SPI1->w0  & 0xFF;
 }
 
 /******************************************************************************

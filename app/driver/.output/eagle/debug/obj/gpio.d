@@ -4,4 +4,4 @@
  c:/Espressif/ESP8266_SDK/include/eagle_soc.h \
  ../include/driver/gpio_register.h \
  c:/Espressif/ESP8266_SDK/include/c_types.h \
- ../include/driver/iomux_register.h
+ ../include/driver/gpio_register.h ../include/driver/iomux_register.h

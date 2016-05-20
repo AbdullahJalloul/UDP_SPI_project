@@ -7,8 +7,8 @@
  *
  * Modification history:
  *     2015/9/24, v1.0 create this file.
- *  Added on: 17 ма€ 2016 г.
- *      Author: »ль€ ѕетрухин
+ *  Added on: 17.05.2016
+ *      Author: Ilya Petrukhin
 *******************************************************************************/
 
 #ifndef UART_REGISTER_H_
@@ -142,82 +142,91 @@
 #define UART_DATE(i)                    (REG_UART_BASE(i) + 0x78)
 #define UART_ID(i)                      (REG_UART_BASE(i) + 0x7C)
 
+#ifndef __I
 #define     __I     volatile const   /*!< defines 'read only' permissions     */
-#define     __O     volatile         /*!< defines 'write only' permissions    */
-#define     __IO    volatile         /*!< defines 'read / write' permissions  */
+#endif	// #ifndef __I
 
-// описани€ битовых полей
+#ifndef __O
+#define     __O     volatile         /*!< defines 'write only' permissions    */
+#endif	// #ifndef __O
+
+#ifndef __IO
+#define     __IO    volatile         /*!< defines 'read / write' permissions  */
+#endif	// #ifndef __IO
+
+/******************* uart bitfields *******************************************/
+
 typedef struct
 {
 	__I u32		dummy			:24;
-	__I u8		rx_fifo_rd_byte	:8;
+	__I u8		rx_fifo_rd_byte	:8;	// R/W share the same address
 } uart_fifo_t;
 
 typedef struct
 {
 	__I u32			dummy			:23;
-	__I unsigned	rx_fifo_tout	:1;
-	__I unsigned	brk_det			:1;
-	__I unsigned	cts_chg			:1;
-	__I unsigned	dsr_chg			:1;
-	__I unsigned	rx_fifo_ovf		:1;
-	__I unsigned	frm_error		:1;
-	__I unsigned	parity_err		:1;
-	__I unsigned	tx_fifo_empty	:1;
-	__I unsigned	rx_fifo_full	:1;
+	__I unsigned	rx_fifo_tout	:1;	// The interrupt raw bit for Rx time-out interrupt(depands on the UART_RX_TOUT_THRHD)
+	__I unsigned	brk_det			:1;	// The interrupt raw bit for Rx byte start error
+	__I unsigned	cts_chg			:1;	// The interrupt raw bit for CTS changing level
+	__I unsigned	dsr_chg			:1;	// The interrupt raw bit for DSR changing level
+	__I unsigned	rx_fifo_ovf		:1;	// The interrupt raw bit for rx fifo overflow
+	__I unsigned	frm_error		:1;	// The interrupt raw bit for other rx error
+	__I unsigned	parity_err		:1;	// The interrupt raw bit for parity check error
+	__I unsigned	tx_fifo_empty	:1;	// The interrupt raw bit for tx fifo empty interrupt(depands on UART_TXFIFO_EMPTY_THRHD bits)
+	__I unsigned	rx_fifo_full	:1;	// The interrupt raw bit for rx fifo full interrupt(depands on UART_RXFIFO_FULL_THRHD bits)
 } uart_int_raw_t;
 
 typedef struct
 {
 	__I u32			dummy			:23;
-	__I unsigned	rx_fifo_tout	:1;
-	__I unsigned	brk_det			:1;
-	__I unsigned	cts_chg			:1;
-	__I unsigned	dsr_chg			:1;
-	__I unsigned	rx_fifo_ovf		:1;
-	__I unsigned	frm_error		:1;
-	__I unsigned	parity_err		:1;
-	__I unsigned	tx_fifo_empty	:1;
-	__I unsigned	rx_fifo_full	:1;
+	__I unsigned	rx_fifo_tout	:1;	// The interrupt state bit for Rx time-out event
+	__I unsigned	brk_det			:1;	// The interrupt state bit for rx byte start error
+	__I unsigned	cts_chg			:1;	// The interrupt state bit for CTS changing level
+	__I unsigned	dsr_chg			:1;	// The interrupt state bit for DSR changing level
+	__I unsigned	rx_fifo_ovf		:1;	// The interrupt state bit for RX fifo overflow
+	__I unsigned	frm_error		:1;	// The interrupt state for other rx error
+	__I unsigned	parity_err		:1;	// The interrupt state bit for rx parity error
+	__I unsigned	tx_fifo_empty	:1;	// The interrupt state bit for TX fifo empty
+	__I unsigned	rx_fifo_full	:1;	// The interrupt state bit for RX fifo full event
 } uart_int_st_t;
 
 typedef struct
 {
 	__IO u32		dummy			:23;
-	__IO unsigned	rx_fifo_tout	:1;
-	__IO unsigned	brk_det			:1;
-	__IO unsigned	cts_chg			:1;
-	__IO unsigned	dsr_chg			:1;
-	__IO unsigned	rx_fifo_ovf		:1;
-	__IO unsigned	frm_error		:1;
-	__IO unsigned	parity_err		:1;
-	__IO unsigned	tx_fifo_empty	:1;
-	__IO unsigned	rx_fifo_full	:1;
+	__IO unsigned	rx_fifo_tout	:1;	// The interrupt enable bit for rx time-out interrupt
+	__IO unsigned	brk_det			:1;	// The interrupt enable bit for rx byte start error
+	__IO unsigned	cts_chg			:1;	// The interrupt enable bit for CTS changing level
+	__IO unsigned	dsr_chg			:1;	// The interrupt enable bit for DSR changing level
+	__IO unsigned	rx_fifo_ovf		:1;	// The interrupt enable bit for rx fifo overflow
+	__IO unsigned	frm_error		:1;	// The interrupt enable bit for other rx error
+	__IO unsigned	parity_err		:1;	// The interrupt enable bit for parity error
+	__IO unsigned	tx_fifo_empty	:1;	// The interrupt enable bit for tx fifo empty event
+	__IO unsigned	rx_fifo_full	:1;	// The interrupt enable bit for rx fifo full event
 } uart_int_ena_t;
 
 typedef struct
 {
 	__O u32			dummy			:23;
-	__O unsigned	rx_fifo_tout	:1;
-	__O unsigned	brk_det			:1;
-	__O unsigned	cts_chg			:1;
-	__O unsigned	dsr_chg			:1;
-	__O unsigned	rx_fifo_ovf		:1;
-	__O unsigned	frm_error		:1;
-	__O unsigned	parity_err		:1;
-	__O unsigned	tx_fifo_empty	:1;
-	__O unsigned	rx_fifo_full	:1;
+	__O unsigned	rx_fifo_tout	:1;	// Set this bit to clear the rx time-out interrupt
+	__O unsigned	brk_det			:1;	// Set this bit to clear the rx byte start interrupt
+	__O unsigned	cts_chg			:1;	// Set this bit to clear the CTS changing interrupt
+	__O unsigned	dsr_chg			:1;	// Set this bit to clear the DSR changing interrupt
+	__O unsigned	rx_fifo_ovf		:1;	// Set this bit to clear the rx fifo over-flow interrupt
+	__O unsigned	frm_error		:1;	// Set this bit to clear other rx error interrupt
+	__O unsigned	parity_err		:1;	// Set this bit to clear the parity error interrupt
+	__O unsigned	tx_fifo_empty	:1;	// Set this bit to clear the tx fifo empty interrupt
+	__O unsigned	rx_fifo_full	:1;	// Set this bit to clear the rx fifo full interrupt
 } uart_int_clr_t;
 
 typedef struct
 {
-	__IO u16		dummy		:12;
-	__IO u32		clk_div		:20;
+	__IO u16		dummy20		:12;
+	__IO u32		clk_div		:20;	// BAUDRATE = UART_CLK_FREQ / UART_CLKDIV
 }uart_clk_div_t;
 
 typedef struct
 {
-	__I u16			dummy		:16;
+	__I u16			dummy16		:16;
 	__IO u8			glitch_flt	:8;
 	__I u8			dummy1		:7;
 	__IO unsigned	autobaud_en	:1;
@@ -225,16 +234,16 @@ typedef struct
 
 typedef struct
 {
-	__I unsigned	txd			:1;
-	__I unsigned	rtsn		:1;
-	__I unsigned	dtrn		:1;
-	__I u8			dummy		:5;
-	__I u8			tx_fifo_cnt	:8;
-	__I unsigned	rxd			:1;
-	__I unsigned	ctsn		:1;
-	__I unsigned	dsrn		:1;
-	__I u8			dummy1		:5;
-	__I u8			rx_fifo_cnt	:8;
+	__I unsigned	txd			:1;	// The level of the uart txd pin
+	__I unsigned	rtsn		:1;	// The level of uart rts pin
+	__I unsigned	dtrn		:1;	// The level of uart dtr pin
+	__I u8			dummy24		:5;
+	__I u8			tx_fifo_cnt	:8;	// Number of data in UART TX fifo
+	__I unsigned	rxd			:1;	// The level of uart rxd pin
+	__I unsigned	ctsn		:1;	// The level of uart cts pin
+	__I unsigned	dsrn		:1;	// The level of uart dsr pin
+	__I u8			dummy8		:5;
+	__I u8			rx_fifo_cnt	:8;	// Number of data in uart rx fifo
 }uart_status_t;
 
 typedef enum
@@ -254,60 +263,60 @@ typedef enum
 
 typedef struct
 {
-	__IO u8			dummy			:7;
-	__IO unsigned	dyr_inv			:1;
-	__IO unsigned	rts_inv			:1;
-	__IO unsigned	txd_inv			:1;
-	__IO unsigned	dsr_inv			:1;
-	__IO unsigned	cts_inv			:1;
-	__IO unsigned	rxd_inv			:1;
-	__IO unsigned	tx_fifo_rst		:1;
-	__IO unsigned	rx_fifo_rst		:1;
+	__IO u8			dummy25			:7;
+	__IO unsigned	dyr_inv			:1;	// Set this bit to inverse uart dtr level
+	__IO unsigned	rts_inv			:1;	// Set this bit to inverse uart rts level
+	__IO unsigned	txd_inv			:1;	// Set this bit to inverse uart txd level
+	__IO unsigned	dsr_inv			:1;	// Set this bit to inverse uart dsr level
+	__IO unsigned	cts_inv			:1;	// Set this bit to inverse uart cts level
+	__IO unsigned	rxd_inv			:1;	// Set this bit to inverse uart rxd level
+	__IO unsigned	tx_fifo_rst		:1;	// Set this bit to reset uart tx fifo
+	__IO unsigned	rx_fifo_rst		:1;	// Set this bit to reset uart rx fifo
 	__IO unsigned	irda_en			:1;
-	__IO unsigned	tx_flow_en		:1;
-	__IO unsigned	loopback		:1;
+	__IO unsigned	tx_flow_en		:1;	// Set this bit to enable uart tx hardware flow control
+	__IO unsigned	loopback		:1;	// Set this bit to enable uart loopback test mode
 	__IO unsigned	irda_rx_inv		:1;
 	__IO unsigned	irda_tx_inv		:1;
 	__IO unsigned	irda_wct		:1;
 	__IO unsigned	irda_tx_en		:1;
 	__IO unsigned	irda_dplx		:1;
-	__IO unsigned	txd_brk			:1;
-	__IO unsigned	sw_dtr			:1;
-	__IO unsigned	sw_rts			:1;
+	__IO unsigned	txd_brk			:1;	// Set this bit to send a tx break signal(need fifo reset first)
+	__IO unsigned	sw_dtr			:1;	// sw dtr
+	__IO unsigned	sw_rts			:1;	// sw rts
 	__IO uart_stop_bits_t	stop_bits	:2;	// Set stop bit: 1:1bit  2:1.5bits  3:2bits
 	__IO uart_num_bits_t	num_bits	:2;	// Set bit num:  0:5bits 1:6bits 2:7bits 3:8bits
-	__IO unsigned	parity_en		:1;
-	__IO unsigned	parity			:1;
+	__IO unsigned	parity_en		:1;	// Set this bit to enable uart parity check
+	__IO unsigned	parity			:1;	// Set parity check:  0:even 1:odd
 } uart_conf0_t;
 
 typedef struct
 {
-	__IO unsigned	rx_tout_en			:1;
-	__IO u8			rx_tout_trhd		:7;
-	__I unsigned	rx_flow_en			:1;
-	__IO u8			rx_flow_trhd		:7;
-	__I unsigned	dummy				:1;
-	__IO u8			tx_fifi_empty_trhd	:7;
-	__I unsigned	dummy1				:1;
-	__IO u8			rx_fifo_full_trhd	:7;
+	__IO unsigned	rx_tout_en			:1;	// Set this bit to enable rx time-out function
+	__IO u8			rx_tout_trhd		:7;	// Config bits for rx time-out threshold,uint: byte,0-127
+	__I unsigned	rx_flow_en			:1;	// Set this bit to enable rx hardware flow control
+	__IO u8			rx_flow_trhd		:7;	// The config bits for rx flow control threshold,0-127
+	__I unsigned	dummy15				:1;
+	__IO u8			tx_fifi_empty_trhd	:7;	// The config bits for tx fifo empty threshold,0-127
+	__I unsigned	dummy7				:1;
+	__IO u8			rx_fifo_full_trhd	:7;	// The config bits for rx fifo full threshold,0-127
 } uart_conf1_t;
 
 typedef struct
 {
 	__I u16			dummy				:12;
-	__IO u32		lowpulse_min_cnt	:20;
+	__IO u32		lowpulse_min_cnt	:20;	// used in baudrate detect
 } uart_lowpulse_t;
 
 typedef struct
 {
 	__I u16			dummy				:12;
-	__IO u32		highpulse_min_cnt	:20;
+	__IO u32		highpulse_min_cnt	:20;	// used in baudrate detect
 } uart_highpulse_t;
 
 typedef struct
 {
 	__I u32			dummy			:22;
-	__IO u16		rxd_edge_cnt	:10;
+	__IO u16		rxd_edge_cnt	:10;	// used in baudrate detect
 } uart_pulse_num_t;
 
 typedef struct UART_struct
@@ -377,28 +386,35 @@ typedef struct UART_struct
 		__I u32					uart_pulse_num;
 		__I uart_pulse_num_t	uart_pulse_num_bits;
 	};
-	__I u32		dummy0;
-	__I u32		dummy1;
-	__I u32		dummy2;
-	__I u32		dummy3;
-	__I u32		dummy4;
-	__I u32		dummy5;
-	__I u32		dummy6;
-	__I u32		dummy7;
-	__I u32		dummy8;
-	__I u32		dummy9;
-	__I u32		dummy10;
-	__I u32		dummy11;
-	__I u32		dummy12;
-	__I u32		dummy13;
-	__I u32		dummy14;
-	__I u32		dummy15;
-	__I u32		dummy16;
-	__IO u32	uart_date;
+	__I u32		dummy34;
+	__I u32		dummy38;
+	__I u32		dummy3C;
+	__I u32		dummy40;
+	__I u32		dummy44;
+	__I u32		dummy48;
+	__I u32		dummy4C;
+	__I u32		dummy50;
+	__I u32		dummy54;
+	__I u32		dummy58;
+	__I u32		dummy5C;
+	__I u32		dummy60;
+	__I u32		dummy64;
+	__I u32		dummy68;
+	__I u32		dummy6C;
+	__I u32		dummy70;
+	__I u32		dummy74;
+	__IO u32	uart_date;	// UART HW INFO
 	__IO u32	uart_id;
 } UART_TypeDef;
 
-// описани€ начальных состо€ний
+#define UART0_BaseAddress		0x60000000
+#define UART1_BaseAddress		0x60000F00
+
+#define UART_0 		((UART_TypeDef *)UART0_BaseAddress)
+#define UART_1 		((UART_TypeDef *)UART1_BaseAddress)
+
+/**************** UART reset value ********************************************/
+
 #define UART_FIFO_RESET_VALUE			((u32)0x00000000)
 #define UART_INT_RAW_RESET_VALUE		((u32)0x00000000)
 #define UART_INT_ST_RESET_VALUE			((u32)0x00000000)
@@ -415,7 +431,7 @@ typedef struct UART_struct
 #define UART_DATE_RESET_VALUE			((u32)0x00062000)
 #define UART_ID_RESET_VALUE				((u32)0x00000500)
 
-// описани€ битовых масок
+/******************* UART bit mask ********************************************/
 #define UART_FIFO_RX_RD_BYTE_MASK		((u32)0x000000FF)
 
 #define UART_INT_RAW_RXFIFO_TOUT		((u32)0x00000100)
@@ -515,12 +531,6 @@ typedef struct UART_struct
 #define UART_HIGHPULSE_MIN_CNT_MASK		((u32)0x000FFFFF)
 
 #define UART_PULSE_NUM_CNT_MASK			((u32)0x000003FF)
-
-#define UART0_BaseAddress		0x60000000
-#define UART1_BaseAddress		0x60000F00
-
-#define UART_0 		((UART_TypeDef *)UART0_BaseAddress)
-#define UART_1 		((UART_TypeDef *)UART1_BaseAddress)
 
 
 #endif // UART_REGISTER_H_INCLUDED

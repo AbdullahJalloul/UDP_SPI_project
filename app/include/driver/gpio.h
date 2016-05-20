@@ -7,6 +7,7 @@
 #define __GPIO_H__
 
 #include "ets_sys.h"
+#include "gpio_register.h"
 
 #define GPIO_Pin_0              (BIT(0))  /* Pin 0 selected */
 #define GPIO_Pin_1              (BIT(1))  /* Pin 1 selected */
@@ -100,28 +101,34 @@ typedef struct
 } GPIO_ConfigTypeDef;
 
 #define GPIO_OUTPUT_SET (gpio_no, bit_value) \
-    gpio_output_conf (bit_value << gpio_no, ((~bit_value) & 0x01) << gpio_no, 1 << gpio_no, 0)
+	do {\
+	GPIO->out_w1ts = bit_value << gpio_no; \
+	GPIO->out_w1tc = ((~bit_value) & 0x01) << gpio_no; \
+	GPIO->enable_w1ts = 1 << gpio_no; \
+	} while (0)
+//    gpio_output_conf (bit_value << gpio_no, ((~bit_value) & 0x01) << gpio_no, 1 << gpio_no, 0)
 
 #define GPIO_OUTPUT(gpio_bits, bit_value) \
     if(bit_value) gpio_output_conf (gpio_bits, 0, gpio_bits, 0);\
     else gpio_output_conf (0, gpio_bits, gpio_bits, 0)
 
-#define GPIO_DIS_OUTPUT(gpio_no)    gpio_output_conf(0, 0, 0, 1<<gpio_no)
-#define GPIO_AS_INPUT(gpio_bits)    gpio_output_conf(0, 0, 0, gpio_bits)
-#define GPIO_AS_OUTPUT(gpio_bits)   gpio_output_conf(0, 0, gpio_bits, 0)
-#define GPIO_INPUT_GET(gpio_no)     ((gpio_input_get()>>gpio_no)&BIT0)
+#define GPIO_DIS_OUTPUT(gpio_no)    (GPIO->enable_w1tc = 1<<gpio_no)
+#define GPIO_AS_INPUT(gpio_bits)    (GPIO->enable_w1tc = gpio_bits)
+#define GPIO_AS_OUTPUT(gpio_bits)   (GPIO->enable_w1ts = gpio_bits)
+#define GPIO_INPUT_GET(gpio_no)     ((GPIO->in >> gpio_no) & BIT0)
 
-void gpio16_output_conf (void);
-void gpio16_output_set (uint8 value);
-void gpio16_input_conf (void);
-uint8 gpio16_input_get (void);
+void gpio_config1		(gpio_config_t *config);
+void gpio16_output_conf	(void);
+void gpio16_output_set	(uint8 value);
+void gpio16_input_conf	(void);
+uint8 gpio16_input_get	(void);
 
 void gpio_output_conf (uint32 set_mask, uint32 clear_mask, uint32 enable_mask,
         uint32 disable_mask);
 void gpio_intr_handler_register (void *fn);
-void gpio_pin_wakeup_enable (uint32 i, GPIO_INT_TYPE intr_state);
+void gpio_pin_wakeup_enable (uint32 i, gpio_pin_int_t intr_state);
 void gpio_pin_wakeup_disable ();
-void gpio_pin_intr_state_set (uint32 i, GPIO_INT_TYPE intr_state);
+void gpio_pin_intr_state_set (uint32 i, gpio_pin_int_t intr_state);
 uint32 gpio_input_get (void);
 
 #endif
