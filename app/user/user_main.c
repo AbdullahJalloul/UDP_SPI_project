@@ -1,8 +1,275 @@
 #include "ets_sys.h"
+#include "osapi.h"
+#include "at_custom.h"
 #include "user_interface.h"
 #include "driver/uart.h"
 
 #include "user_tcp_server.h"
+
+/*********************** define constants *************************************/
+typedef enum 
+{
+	U_WIFI_AP_MODE = 0,
+	U_WIFI_STA_MODE
+} u_wifi_modes;
+
+typedef enum
+{
+	U_STATE_STOP = 0,
+	U_STATE_SEARCH,
+	U_STATE_TRANSMIT
+} u_states;
+
+typedef struct _um_t
+{
+	u_wifi_modes	wifi_mode;	// режим wi-fi 0-AP 1-STA
+	u8				wifi_ch;	// канал wi-fi 0-9
+	u8				group_no;	// номер группы 0-9
+	u8				channel_no;	// номер канала 1-9, 0 - групповой
+	u_states		state;		// статус передачи 0-отключён, 1-поиск, 2-передача
+} um_t;
+
+void	at_u_setup_test		(uint8_t id);
+void	at_u_setup_query	(uint8_t id);
+void	at_u_setup_setup	(uint8_t id, char *pPara);
+void	at_u_setup_exe		(uint8_t id);
+
+void	at_u_start_test		(uint8_t id);
+void	at_u_start_query	(uint8_t id);
+void	at_u_start_exe		(uint8_t id);
+
+void	at_u_stop_test		(uint8_t id);
+void	at_u_stop_query		(uint8_t id);
+void	at_u_stop_exe		(uint8_t id);
+
+um_t um = 
+{
+		U_WIFI_AP_MODE,
+		0,
+		1,
+		1,
+		U_STATE_STOP
+};
+
+at_funcationType at_custom_cmd[] =
+{
+    {"+USETUP", 7, at_u_setup_test, at_u_setup_query, at_u_setup_setup, at_u_setup_exe},
+    {"+USTART", 7, at_u_start_test, at_u_start_query, NULL, at_u_start_exe},
+    {"+USTOP", 7, at_u_stop_test, at_u_stop_query, NULL, at_u_stop_exe},
+};
+
+uint8 buffer[128] = {0};
+
+
+/*******************************************************************************
+ * Функция ответа на команду AT+USETUP?
+ ******************************************************************************/
+void ICACHE_FLASH_ATTR at_u_setup_test (uint8_t id)
+{
+	at_port_print ("User setup interface:\r\n AP/STA mode (0-1), wifi_ch (0-13), group (0-9), channel (0-9)\r\n");
+    at_response_ok ();
+}
+
+/*******************************************************************************
+ * Функция ответа на команду AT+USTART?
+ ******************************************************************************/
+void ICACHE_FLASH_ATTR at_u_start_test (uint8_t id)
+{
+	at_port_print ("Start user communication\r\n");
+    at_response_ok ();	
+}
+
+/*******************************************************************************
+ * Функция ответа на команду AT+USTOP?
+ ******************************************************************************/
+void ICACHE_FLASH_ATTR at_u_stop_test (uint8_t id)
+{
+	at_port_print ("Stop user communication\r\n");
+    at_response_ok ();	
+}
+
+/*******************************************************************************
+ * Функция ответа на команду AT+USETUP=?
+ ******************************************************************************/
+void ICACHE_FLASH_ATTR at_u_setup_query (uint8_t id)
+{
+	ets_sprintf (buffer, "%s\r\n", "User setup state:");
+    at_port_print (buffer);
+    if (um.wifi_mode == U_WIFI_AP_MODE)
+    {
+    	at_port_print ("WiFi Access Point mode\r\n");
+    }
+    else
+    {
+    	at_port_print ("WiFi Station mode\r\n");
+    }
+    os_sprintf (buffer, "%s%d\r\n", "WiFi channel no ", um.wifi_ch);
+    at_port_print (buffer);
+    os_sprintf (buffer, "%s%d\r\n", "Group no ", um.group_no);
+    at_port_print (buffer);
+    if (um.channel_no)
+    {
+    	os_sprintf (buffer, "%s%d\r\n", "Channel no ", um.channel_no);
+    }
+    else
+    {
+    	os_sprintf (buffer, "%s\r\n", "Group mode");
+    }
+    at_port_print (buffer);
+    at_response_ok ();
+}
+
+/*******************************************************************************
+ * Функция ответа на команду AT+USTART=?
+ ******************************************************************************/
+void ICACHE_FLASH_ATTR at_u_start_query (uint8_t id)
+{
+	if (um.state == U_STATE_STOP)
+	{
+		at_port_print ("USTOP");
+	}
+	else if (um.state == U_STATE_SEARCH)
+	{
+		at_port_print ("USEARCH");
+	}
+	else
+	{
+		// U_STATE_TRANSMIT
+		at_port_print ("UTRANSMIT");
+	}
+    at_response_ok ();
+}
+
+/*******************************************************************************
+ * Функция ответа на команду AT+USTOP=?
+ ******************************************************************************/
+void ICACHE_FLASH_ATTR at_u_stop_query (uint8_t id)
+{
+	if (um.state == U_STATE_STOP)
+	{
+		at_port_print ("USTOP");
+	}
+	else if (um.state == U_STATE_SEARCH)
+	{
+		at_port_print ("USEARCH");
+	}
+	else
+	{
+		// U_STATE_TRANSMIT
+		at_port_print ("UTRANSMIT");
+	}
+    at_response_ok ();	
+}
+
+/*******************************************************************************
+ * Функция ответа на команду AT+USETUP=1, 3, 2, 5
+ * Первый параметр: 0 - wifi AP mode, 1 - wifi STA mode
+ * Второй параметр: номер wifi канала 0-13
+ * Третий параметр: номер группы инструментов 1-9
+ * Четвёртый параметр: номер канала в группе 0 - групповая работа
+ * 						1-9 канал в группе
+ ******************************************************************************/
+// test :AT+TEST=1,"abc"<,3>
+void ICACHE_FLASH_ATTR at_u_setup_setup (uint8_t id, char *pPara)
+{
+    int result = 0;
+    int err = 0;
+    int	flag = 0;
+    
+    pPara++; // skip '='
+    //get the first digit parameter
+    flag = at_get_next_int_dec (&pPara, &result, &err);
+    // flag must be true because there are more parameter
+    if (flag == FALSE)
+    {
+        at_response_error ();
+        return;
+    }
+    if (result)
+    {
+    	um.wifi_mode = U_WIFI_STA_MODE;
+    }
+    else
+    {
+    	um.wifi_mode = U_WIFI_AP_MODE;
+    }
+    //get the second digit parameter
+    if (*pPara++ != ',')  // skip ','
+    {
+        at_response_error ();
+        return;
+    }
+    flag = at_get_next_int_dec (&pPara, &result, &err);
+    if (flag == FALSE)
+    {
+        at_response_error ();
+        return;
+    }
+    um.wifi_ch = result;
+    //get the third digit parameter
+    if (*pPara++ != ',')  // skip ','
+    {
+        at_response_error ();
+        return;
+    }
+    flag = at_get_next_int_dec (&pPara, &result, &err);
+    if (flag == FALSE)
+    {
+        at_response_error ();
+        return;
+    }
+    um.group_no = result;
+    //get the fourth digit parameter
+    if (*pPara++ != ',')  // skip ','
+    {
+        at_response_error ();
+        return;
+    }
+    flag = at_get_next_int_dec (&pPara, &result, &err);
+    if (flag == FALSE)
+    {
+        at_response_error ();
+        return;
+    }
+    um.channel_no = result;
+
+    if (*pPara != '\r')
+    {
+        at_response_error();
+        return;
+    }
+    at_response_ok ();
+}
+
+/*******************************************************************************
+ * Функция ответа на команду AT+USETUP
+ ******************************************************************************/
+void ICACHE_FLASH_ATTR at_u_setup_exe (uint8_t id)
+{
+    uint8 buffer[32] = {0};
+
+    os_sprintf (buffer, "%s\r\n", "at_u_setup_exe");
+    at_port_print (buffer);
+    at_response_ok ();
+}
+
+
+/*******************************************************************************
+ * Функция ответа на команду AT+USTART
+ ******************************************************************************/
+void ICACHE_FLASH_ATTR at_u_start_exe (uint8_t id)
+{
+	// TODO: начать трансляцию, когда найдётся партнёр
+}
+
+/*******************************************************************************
+ * Функция ответа на команду AT+USTOP
+ ******************************************************************************/
+void ICACHE_FLASH_ATTR at_u_stop_exe (uint8_t id)
+{
+	// TODO: остановить передачу пакетов
+}
+
 
 extern int ets_uart_printf (const char *fmt, ...);
 int (*console_printf) (const char *fmt, ...) = ets_uart_printf;
@@ -151,11 +418,11 @@ void init_done (void)
 	}
 #endif
 
-	// ������������� � ������ tcp ������� �� ����� 80
+	// ������������� � ������ tcp ������� �� ����� 80
 	TCP_SERV_CFG *p = tcpsrv_init (80);
 	if (p != NULL)
 	{
-		// ������� ������ �� ���� ����������:
+		// ������� ������ �� ���� ����������:
 		p->max_conn = 3;
 		p->time_wait_rec = 30;
 		p->time_wait_cls = 30;
@@ -163,7 +430,7 @@ void init_done (void)
 		ets_uart_printf (
 		        "Max connection %d, time waits %d & %d, min heap size %d\n",
 		        p->max_conn, p->time_wait_rec, p->time_wait_cls, p->min_heap);
-		// �������� � ��������� �����������:
+		// �������� � ��������� �����������:
 		//p->func_discon_cb = NULL;
 		//p->func_listen =
 		//p->func_sent_cb =
@@ -171,11 +438,11 @@ void init_done (void)
 		if ( !tcpsrv_start (p))
 			tcpsrv_close (p);
 	}
-	// ������������� � ������ tcp ������� �� ����� 8080
+	// ������������� � ������ tcp ������� �� ����� 8080
 	p = tcpsrv_init (8080);
 	if (p != NULL)
 	{
-		// ������� ������ �� ���� ����������:
+		// ������� ������ �� ���� ����������:
 		p->max_conn = 99;
 		p->time_wait_rec = 30;
 		p->time_wait_cls = 30;
@@ -195,12 +462,15 @@ void init_done (void)
 
 void ICACHE_FLASH_ATTR user_init(void)
 {
-	// ��������� SPI ������
-	os_printf ("SDK version:%s\n", system_get_sdk_version ());
-	os_printf ("------------------start------------------\n\r");
-	//set_data ();
-	spi_master_init ();// ������������� HSPI ��� �������, 20���
-	spi_req_intr_init ();// ������������� ���������� ������� �� �������� �� SPI
+	char buf[64] = {0};
+	
+	at_init ();					// init AT commands
+	at_set_custom_info (buf);
+    at_port_print ("\r\nready\r\n");
+    at_cmd_array_regist (&at_custom_cmd[0], sizeof (at_custom_cmd) / sizeof (at_custom_cmd[0]));	// setup user AT commands
+
+	spi_master_init ();// ������������� HSPI ��� �������, 20���
+	spi_req_intr_init ();// ������������� ���������� ������� �� �������� �� SPI
 	spi_mast_byte_write (0xAA);
 
 	// Configure the UART

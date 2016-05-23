@@ -719,3 +719,243 @@ void ICACHE_FLASH_ATTR spi_test_init (void)
 }
 #endif
 
+
+/*******************************************************************************
+* Примеры работы с прерываниями из форума
+* In the master mode, it is the divider of spi_clk. So spi_clk frequency is 80MHz/(spi_clkdiv_pre+1)/(spi_clkcnt_N+1)
+* In the master mode, SPI_CLKCNT_H must be floor((spi_clkcnt_N+1)/2-1)
+* In the master mode, SPI_CLKCNT_L must be eqaul to spi_clkcnt_N
+* 
+******************************************************************************/
+
+#define SPI_CLOCK_10MHZ (((0 & SPI_CLKDIV_PRE) << SPI_CLKDIV_PRE_S) |\
+        ((7 & SPI_CLKCNT_N) << SPI_CLKCNT_N_S) |\
+        ((3 & SPI_CLKCNT_H) << SPI_CLKCNT_H_S) |\
+        ((7 & SPI_CLKCNT_L) << SPI_CLKCNT_L_S))
+#define SPI_CLOCK_500KHZ (((2 & SPI_CLKDIV_PRE) << SPI_CLKDIV_PRE_S) |\
+        ((63 & SPI_CLKCNT_N) << SPI_CLKCNT_N_S) |\
+        ((31 & SPI_CLKCNT_H) << SPI_CLKCNT_H_S) |\
+        ((63 & SPI_CLKCNT_L) << SPI_CLKCNT_L_S))
+#define SET_SPI_CLOCK_FAST() WRITE_PERI_REG(SPI_CLOCK(HSPI),SPI_CLOCK_10MHZ)
+#define SET_SPI_CLOCK_SLOW() WRITE_PERI_REG(SPI_CLOCK(HSPI),SPI_CLOCK_500KHZ)
+ 
+ 
+ 
+/*******************************************************************************
+* передает команду, потом читает read_length
+* только запуск операции, прием данных в обработчике прерываний
+*******************************************************************************/
+static volatile uint8_t mem1=0; // проверка влияния обращений к регистрам на скорость
+void hspi_cr_start(const uint8_t cmd, const uint8_t read_length)
+{
+    uint32_t regvalue;
+    uint16_t numberBit;
+ 
+    if (mem1 ==0)
+    {
+        regvalue =  SPI_USR_COMMAND  /*| SPI_CS_HOLD */ ;
+        if (0 != read_length)
+        {
+            regvalue |= SPI_USR_MISO;
+            numberBit = read_length * 8 -1;
+        }
+        else
+            numberBit = 7;
+ 
+        // отключаем фазы обмена address, dummy, data_out
+        //regvalue &= ~(BIT2 | SPI_USR_ADDR | SPI_USR_DUMMY | SPI_USR_MOSI /*| SPI_USR_MISO | SPI_USR_COMMAND*/); //clear bit 2 see example IoT_Demo
+        WRITE_PERI_REG(SPI_USER(HSPI), regvalue);
+ 
+        //set output buffer length, the buffer is the register"SPI_FLASH_C0"
+        WRITE_PERI_REG(SPI_USER1(HSPI),
+                ((7 & SPI_USR_MOSI_BITLEN)<<SPI_USR_MOSI_BITLEN_S)|
+                ((numberBit & SPI_USR_MISO_BITLEN)<<SPI_USR_MISO_BITLEN_S));
+ 
+        //SPI_FLASH_USER2 bit28-31 is cmd length,cmd bit length is value(0-15)+1,
+        // bit15-0 is cmd value.
+        //0x70000000 is for 8bits cmd
+        WRITE_PERI_REG(SPI_USER2(HSPI),
+                ((7 & SPI_USR_COMMAND_BITLEN) << SPI_USR_COMMAND_BITLEN_S) |
+                ((cmd & SPI_USR_COMMAND_VALUE) << SPI_USR_COMMAND_VALUE_S) );
+        mem1=1;
+    }
+    SET_PERI_REG_MASK(SPI_CMD(HSPI), SPI_USR);   // send
+}
+ 
+void  __attribute__((optimize("O2"))) hspi_int_handler(void* *para)
+{
+    enum spi_rx_state temp_rx_state;  // локальная копия volatile переменной
+    uint32_t regvalue;
+ 
+    if(READ_PERI_REG(0x3ff00020) & BIT4)
+    {
+        //following 3 lines is to clear isr signal
+        CLEAR_PERI_REG_MASK(SPI_SLAVE(SPI), 0x3ff);
+//        ++spicount;   // проверка работы прерываний
+    }
+    else if (READ_PERI_REG(0x3ff00020) & BIT7)
+	{ //bit7 is for hspi isr,
+
+		// обнуляем все запросы прерываний spi (хотя использется только SPI_TRANS_DONE)
+		CLEAR_PERI_REG_MASK(SPI_SLAVE(HSPI),
+				SPI_TRANS_DONE | SPI_SLV_WR_STA_DONE |
+				SPI_SLV_RD_STA_DONE | SPI_SLV_WR_BUF_DONE |
+				SPI_SLV_RD_BUF_DONE);
+
+// TODO:		hspi_cr_start (INSTRUCTION_READ_STATUS, 62);
+//		mcp251x.mcp_rx_state = RXSTATE_FAST_POLLING ;
+	}
+}
+ 
+void ICACHE_FLASH_ATTR hspi_init()
+{
+    uint32 regvalue;
+ 
+    // gpio mux
+    WRITE_PERI_REG (PERIPHS_IO_MUX, 0x105);
+    pin_func_select (PERIPHS_IO_MUX_MTDI_U, 2); // HSPIQ MISO
+    pin_func_select (PERIPHS_IO_MUX_MTCK_U, 2); // HSPID MOSI
+    pin_func_select (PERIPHS_IO_MUX_MTMS_U, 2); // CLK
+    pin_func_select (PERIPHS_IO_MUX_MTDO_U, 2); // CS
+ 
+#if 0
+    WRITE_PERI_REG(SPI_CLOCK(HSPI),
+            ((1 & SPI_CLKDIV_PRE) << SPI_CLKDIV_PRE_S) |
+            ((3 & SPI_CLKCNT_N) << SPI_CLKCNT_N_S) |  /*In the master mode, it is the divider of spi_clk. So spi_clk frequency is 80MHz/(spi_clkdiv_pre+1)/(spi_clkcnt_N+1)*/
+            ((1 & SPI_CLKCNT_H) << SPI_CLKCNT_H_S) |  /*In the master mode, it must be floor((spi_clkcnt_N+1)/2-1)*/
+            ((3 & SPI_CLKCNT_L) << SPI_CLKCNT_L_S));  /*In the master mode, it must be eqaul to spi_clkcnt_N*/
+#else
+    SET_SPI_CLOCK_FAST();
+#endif
+ 
+    // Disable the interrupt
+    CLEAR_PERI_REG_MASK(SPI_SLAVE(HSPI),
+            SPI_TRANS_DONE_EN | SPI_SLV_WR_STA_DONE_EN |
+            SPI_SLV_RD_STA_DONE_EN | SPI_SLV_WR_BUF_DONE_EN |
+            SPI_SLV_RD_BUF_DONE_EN     );
+    //register level2 isr function, which contains spi, hspi and i2s events
+    ETS_SPI_INTR_ATTACH(hspi_int_handler, NULL);
+    //enable level2 isr, which contains spi, hspi and i2s events
+    ETS_SPI_INTR_ENABLE();
+}
+ 
+
+/******************************************************************************/
+/* Из примера ILI9341 */
+
+#define SPIFIFOSIZE 16 //16 words length
+
+extern uint32_t *spi_fifo;
+
+extern void hspi_init(void);
+extern void hspi_send_data(const uint8_t * data, uint8_t datasize);
+extern void hspi_send_uint16_r(const uint16_t data, int32_t repeats);
+inline void hspi_wait_ready(void){while (READ_PERI_REG(SPI_FLASH_CMD(HSPI))&SPI_FLASH_USR);}
+
+inline void hspi_prepare_tx(uint32_t bytecount)
+{
+	uint32_t bitcount = bytecount * 8 - 1;
+
+	WRITE_PERI_REG(SPI_FLASH_USER1(HSPI), (bitcount & SPI_USR_OUT_BITLEN) << SPI_USR_OUT_BITLEN_S);
+}
+
+
+inline void hspi_start_tx()
+{
+	SET_PERI_REG_MASK(SPI_FLASH_CMD(HSPI), SPI_FLASH_USR);   // send
+}
+
+inline void hspi_send_uint8(uint8_t data)
+{
+	hspi_prepare_tx(1);
+	*spi_fifo = data;
+	hspi_start_tx();
+}
+
+inline void hspi_send_uint16(uint16_t data)
+{
+	hspi_prepare_tx(2);
+	*spi_fifo = data;
+	hspi_start_tx();
+}
+
+inline void hspi_send_uint32(uint32_t data)
+{
+	hspi_prepare_tx(4);
+	*spi_fifo = data;
+	hspi_start_tx();
+}
+
+
+#include "hspi.h"
+
+/*
+Pinout:
+MISO GPIO12
+MOSI GPIO13
+CLK GPIO14
+CS GPIO15
+DC GPIO2
+*/
+
+#define HSPI_PRESCALER 4// target hspi clock speed is 40MHz/HSPI_PRESCALER, so that with prescaler 2 the hspi clock is 30MHz
+
+#define __min(a,b) ((a > b) ? (b):(a))
+uint32_t *spi_fifo;
+
+void hspi_init(void)
+{
+	spi_fifo = (uint32_t*)SPI_FLASH_C0(HSPI);
+
+	WRITE_PERI_REG(PERIPHS_IO_MUX, 0x105); //clear bit9
+
+	PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDI_U, 2); // HSPIQ MISO GPIO12
+	PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTCK_U, 2); // HSPID MOSI GPIO13
+	PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTMS_U, 2); // CLK GPIO14
+	PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDO_U, 2); // CS GPIO15
+
+
+	// SPI clock = CPU clock / 10 / 4
+	// time length HIGHT level = (CPU clock / 10 / 2) ^ -1,
+	// time length LOW level = (CPU clock / 10 / 2) ^ -1
+	WRITE_PERI_REG(SPI_FLASH_CLOCK(HSPI),
+	   (((HSPI_PRESCALER - 1) & SPI_CLKDIV_PRE) << SPI_CLKDIV_PRE_S) |
+	   ((1 & SPI_CLKCNT_N) << SPI_CLKCNT_N_S) |
+	   ((0 & SPI_CLKCNT_H) << SPI_CLKCNT_H_S) |
+	   ((1 & SPI_CLKCNT_L) << SPI_CLKCNT_L_S));
+
+	WRITE_PERI_REG(SPI_FLASH_CTRL1(HSPI), 0);
+
+	uint32_t regvalue = SPI_FLASH_DOUT;
+    regvalue &= ~(BIT2 | SPI_FLASH_USR_ADDR | SPI_FLASH_USR_DUMMY | SPI_FLASH_USR_DIN | SPI_USR_COMMAND | SPI_DOUTDIN); //clear bit 2 see example IoT_Demo
+	WRITE_PERI_REG(SPI_FLASH_USER(HSPI), regvalue);
+}
+
+void hspi_send_uint16_r(uint16_t data, int32_t repeats)
+{
+	uint32_t i;
+	uint32_t word = data << 16 | data;
+
+	while(repeats > 0)
+	{
+		uint16_t bytes_to_transfer = __min(repeats * sizeof(uint16_t) , SPIFIFOSIZE * sizeof(uint32_t));
+		hspi_wait_ready();
+		hspi_prepare_tx(bytes_to_transfer);
+		for(i = 0; i < (bytes_to_transfer + 3) / 4;i++)
+			spi_fifo[i] = word;
+		hspi_start_tx();
+		repeats -= bytes_to_transfer / 2;
+	}
+}
+
+void hspi_send_data(const uint8_t * data, uint8_t datasize)
+{
+	uint32_t *_data = (uint32_t*)data;
+	uint8_t i;
+
+	uint8_t words_to_send = __min((datasize + 3) / 4, SPIFIFOSIZE);
+	hspi_prepare_tx(datasize);
+	for(i = 0; i < words_to_send;i++)
+		spi_fifo[i] = _data[i];
+	hspi_start_tx();
+}

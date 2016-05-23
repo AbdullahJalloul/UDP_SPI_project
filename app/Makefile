@@ -75,17 +75,20 @@ LINKFLAGS_eagle.app.v6 = \
 	-lhal					\
 	-lphy	\
 	-lpp	\
+	-lat	\
+	-lsmartconfig \
 	-lnet80211	\
+	-lcrypto \
 	-lwpa	\
 	-lmain	\
 	-ljson	\
-	-lupgrade\
-	-lssl	\
-	-lpwm	\
-	-lsmartconfig \
-	-lcrypto \
 	$(DEP_LIBS_eagle.app.v6)					\
 	-Wl,--end-group
+
+#	-lpwm	
+#	-lupgrade\
+#	-lssl	\
+#
 
 DEPENDS_eagle.app.v6 = \
                 $(LD_FILE) \

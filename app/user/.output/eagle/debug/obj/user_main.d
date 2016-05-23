@@ -1,12 +1,6 @@
 .output/eagle/debug/obj/user_main.o .output/eagle/debug/obj/user_main.d : user_main.c c:/Espressif/ESP8266_SDK/include/ets_sys.h \
  c:/Espressif/ESP8266_SDK/include/c_types.h \
  c:/Espressif/ESP8266_SDK/include/eagle_soc.h \
- c:/Espressif/ESP8266_SDK/include/user_interface.h \
- c:/Espressif/ESP8266_SDK/include/os_type.h \
- c:/Espressif/ESP8266_SDK/include/ets_sys.h ../include/lwip/ip_addr.h \
- ../include/lwip/opt.h ../include/lwipopts.h ../include/lwip/debug.h \
- ../include/lwip/arch.h ../include/arch/cc.h \
- c:/Espressif/ESP8266_SDK/include/c_types.h \
  c:/Espressif/ESP8266_SDK/include/osapi.h \
  c:\espressif\xtensa-lx106-elf\xtensa-lx106-elf\include\string.h \
  c:\espressif\xtensa-lx106-elf\xtensa-lx106-elf\include\_ansi.h \
@@ -24,7 +18,13 @@
  c:\espressif\xtensa-lx106-elf\lib\gcc\xtensa-lx106-elf\5.1.0\include\stddef.h \
  c:\espressif\xtensa-lx106-elf\xtensa-lx106-elf\include\sys\cdefs.h \
  c:\espressif\xtensa-lx106-elf\xtensa-lx106-elf\include\sys\string.h \
- ../include/user_config.h ../include/lwip/def.h \
+ ../include/user_config.h c:/Espressif/ESP8266_SDK/include/at_custom.h \
+ c:/Espressif/ESP8266_SDK/include/user_interface.h \
+ c:/Espressif/ESP8266_SDK/include/os_type.h \
+ c:/Espressif/ESP8266_SDK/include/ets_sys.h ../include/lwip/ip_addr.h \
+ ../include/lwip/opt.h ../include/lwipopts.h ../include/lwip/debug.h \
+ ../include/lwip/arch.h ../include/arch/cc.h \
+ c:/Espressif/ESP8266_SDK/include/c_types.h ../include/lwip/def.h \
  c:/Espressif/ESP8266_SDK/include/queue.h \
  c:/Espressif/ESP8266_SDK/include/spi_flash.h ../include/driver/uart.h \
  ../include/driver/uart_register.h ../include/user_tcp_server.h \

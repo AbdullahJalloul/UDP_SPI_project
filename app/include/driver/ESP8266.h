@@ -45,7 +45,7 @@ extern volatile uint32 rtc_ram_[64];	// 0x60001000
 extern volatile uint32 rtc_mem_[192];	// 0x60001100
 extern volatile uint32 io4_regs_[384];	// 0x60009800
 
-#define MEMW() __asm__ __volatile__("memw" : : : "memory") // синхронизация и ожидание отработки fifo-write на шинах CPU
+#define MEMW() __asm__ __volatile__("memw" : : : "memory") // СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёСЏ Рё РѕР¶РёРґР°РЅРёРµ РѕС‚СЂР°Р±РѕС‚РєРё fifo-write РЅР° С€РёРЅР°С… CPU
 
 /* dport (io1) section */
 #define DPORT_BASE		dport_		// 0x3ff00000
@@ -69,7 +69,7 @@ extern volatile uint32 io4_regs_[384];	// 0x60009800
 #define I2S_BASE		i2s_		// 0x60000E00
 #define UART1_BASE		uart1_		// 0x60000F00
 #define RTC_RAM_BASE	rtc_ram_	// 0x60001000	// Size: 1024 bytes
-#define RTC_MEM_BASE	rtc_mem_	// 0x60001100   // Size: 768 bytes, 192 dword registers, user data последние 512 байт
+#define RTC_MEM_BASE	rtc_mem_	// 0x60001100   // Size: 768 bytes, 192 dword registers, user data пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 512 пїЅпїЅпїЅпїЅ
 
 /* io4 section */
 #define IO4_BASE		io4_regs_	// 0x60009800	// Size: 1536 bytes
@@ -85,13 +85,13 @@ extern volatile uint32 io4_regs_[384];	// 0x60009800
 #define FLASH_BASE		0x40200000
 #define FLASH_MIN_SIZE	0x00080000	// 512 k
 #define FLASH_MAX_SIZE	0x01000000
-#define FLASH_CACHE_MAX_SIZE	0x100000 // размер "кешируемой" области Flash
+#define FLASH_CACHE_MAX_SIZE	0x100000 // пїЅпїЅпїЅпїЅпїЅпїЅ "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ" пїЅпїЅпїЅпїЅпїЅпїЅпїЅ Flash
 #define FLASH_SYSCONST_ADR 0x0007C000
 
 /* interrupt related */
 #define ETS_SLC_INUM		1
 #define ETS_SPI_INUM        2
-#define ETS_RTC_INUM        3 // см. ets_rtc_int_register()
+#define ETS_RTC_INUM        3 // пїЅпїЅ. ets_rtc_int_register()
 #define ETS_GPIO_INUM       4
 #define ETS_UART_INUM       5
 #define ETS_MAX_INUM        6
@@ -493,9 +493,9 @@ typedef enum {
 #define IO_RTC_3				rtc_[3]
 //0x60000710
 #define IO_RTC_4				rtc_[4] // rtc_enter_sleep() = 0;
-// IO_RTC_4 = 0 - отключение WiFi
-//bit31 =1 источник тактирования для I2S, ... = PLL (80MHz)
-//bit25,26 =1 источник тактирования для SAR ... = PLL (80MHz)
+// IO_RTC_4 = 0 - РѕС‚РєР»СЋС‡РµРЅРёРµ WiFi
+//bit31 =1 РёСЃС‚РѕС‡РЅРёРє С‚Р°РєС‚РёСЂРѕРІР°РЅРёСЏ РґР»СЏ I2S, ... = PLL (80MHz)
+//bit25,26 =1 РёСЃС‚РѕС‡РЅРёРє С‚Р°РєС‚РёСЂРѕРІР°РЅРёСЏ РґР»СЏ SAR ... = PLL (80MHz)
 //0x60000714
 #define IO_RTC_5				rtc_[5]	// bit0..3: rtc_get_reset_reason()
 //0x60000718
@@ -564,7 +564,7 @@ typedef enum {
 /* GPIOx_MUX:	0x60000800 */
 #define GPIO_MUX_CFG	iomux_[0]
 #define MUX_CFG_MASK	0xFFF
-#define MUX_SPI0_CLK_BIT	8 // =1 при 80 MHz, =0 при 40, 26, 20 MHz на SPI Flash
+#define MUX_SPI0_CLK_BIT	8 // =1 пїЅпїЅпїЅ 80 MHz, =0 пїЅпїЅпїЅ 40, 26, 20 MHz пїЅпїЅ SPI Flash
 
 #define GPIO0_MUX		iomux_[IDX_MUX0]
 #define GPIO1_MUX		iomux_[IDX_MUX1]
@@ -628,19 +628,19 @@ typedef enum {
 #define VAL_MUX_GPIO14_IOPORT	((1<<GPIO_MUX_FUN_BIT0) | (1<<GPIO_MUX_FUN_BIT1) | (1<<GPIO_MUX_PULLUP_BIT))	// GPIO14, input
 #define VAL_MUX_GPIO15_IOPORT	((1<<GPIO_MUX_FUN_BIT0) | (1<<GPIO_MUX_FUN_BIT1) | (1<<GPIO_MUX_PULLUP_BIT))	// GPIO15, input
 
-// таблица (по 4 бита на номер пина) адресов IO_MUX в соответствии с номерами GPIOn
+// С‚Р°Р±Р»РёС†Р° (РїРѕ 4 Р±РёС‚Р° РЅР° РЅРѕРјРµСЂ РїРёРЅР°) Р°РґСЂРµСЃРѕРІ IO_MUX РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ РЅРѕРјРµСЂР°РјРё GPIOn
 #define _IO_MUX_GPIO ((uint64_t)0x3210BA9876FE4D5Cull)
-// получить адрес IO_MUX в соответствии с номером GPIOn
+// РїРѕР»СѓС‡РёС‚СЊ Р°РґСЂРµСЃ IO_MUX РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ РЅРѕРјРµСЂРѕРј GPIOn
 #define GPIOx_MUX(PIN_NUM) iomux_[1 + (uint32)((_IO_MUX_GPIO>>((PIN_NUM)<<2)) & 0x0F)]
 
-// таблица (по 2 бита на номер пина) номеров функций пинов для установки в режим GPIO
+// С‚Р°Р±Р»РёС†Р° (РїРѕ 2 Р±РёС‚Р° РЅР° РЅРѕРјРµСЂ РїРёРЅР°) РЅРѕРјРµСЂРѕРІ С„СѓРЅРєС†РёР№ РїРёРЅРѕРІ РґР»СЏ СѓСЃС‚Р°РЅРѕРІРєРё РІ СЂРµР¶РёРј GPIO
 #define _FUN_IO_PORT  ((uint32_t)0xFFFFF0CCul)
-// таблица (по 4 бита на номер пина) номеров функций пинов для установки в режим по умочанию в SDK
+// С‚Р°Р±Р»РёС†Р° (РїРѕ 4 Р±РёС‚Р° РЅР° РЅРѕРјРµСЂ РїРёРЅР°) РЅРѕРјРµСЂРѕРІ С„СѓРЅРєС†РёР№ РїРёРЅРѕРІ РґР»СЏ СѓСЃС‚Р°РЅРѕРІРєРё РІ СЂРµР¶РёРј РїРѕ СѓРјРѕС‡Р°РЅРёСЋ РІ SDK
 #define _FUN_DEF_SDK  ((uint64_t)0x3333111111000200ull)
 
-// получить номер функции для установки I/O пина в режим порта GPIOn
+// РїРѕР»СѓС‡РёС‚СЊ РЅРѕРјРµСЂ С„СѓРЅРєС†РёРё РґР»СЏ СѓСЃС‚Р°РЅРѕРІРєРё I/O РїРёРЅР° РІ СЂРµР¶РёРј РїРѕСЂС‚Р° GPIOn
 #define MUX_FUN_IO_PORT(PIN_NUM) ((uint32_t)(_FUN_IO_PORT >> (PIN_NUM<<1)) & 0x03)
-// получить номер функции для установки I/O пина в режим по умочанию в SDK
+// РїРѕР»СѓС‡РёС‚СЊ РЅРѕРјРµСЂ С„СѓРЅРєС†РёРё РґР»СЏ СѓСЃС‚Р°РЅРѕРІРєРё I/O РїРёРЅР° РІ СЂРµР¶РёРј РїРѕ СѓРјРѕС‡Р°РЅРёСЋ РІ SDK
 #define MUX_FUN_DEF_SDK(PIN_NUM) ((uint32_t)(_FUN_DEF_SDK >> (PIN_NUM<<2)) & 0x07)
 
 #define SET_PIN_FUNC(PIN_NUM, FUN) GPIOx_MUX(PIN_NUM) = (GPIOx_MUX(PIN_NUM) & (~GPIO_MUX_FUN_MASK)) | ((FUN&3) << GPIO_MUX_FUN_BIT0) | ((FUN & 4) << (GPIO_MUX_FUN_BIT2 - 2))
@@ -652,9 +652,9 @@ typedef enum {
 #define SET_PIN_PULLDOWN_DIS(PIN_NUM) GPIOx_MUX(PIN_NUM) &= ~(1 << GPIO_MUX_PULLDOWN_BIT)
 
 
-// установить функцию GPIOn как I/O port
+// СѓСЃС‚Р°РЅРѕРІРёС‚СЊ С„СѓРЅРєС†РёСЋ GPIOn РєР°Рє I/O port
 #define SET_PIN_FUNC_IOPORT(PIN_NUM) SET_PIN_FUNC(PIN_NUM, MUX_FUN_IO_PORT(PIN_NUM))
-// установить функцию GPIOn по умолчанию для SDK
+// СѓСЃС‚Р°РЅРѕРІРёС‚СЊ С„СѓРЅРєС†РёСЋ GPIOn РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РґР»СЏ SDK
 #define SET_PIN_FUNC_DEF_SDK(PIN_NUM) SET_PIN_FUNC(PIN_NUM, MUX_FUN_DEF_SDK(PIN_NUM))
 
 /* SDIO:0x60000A00 registers */
@@ -754,19 +754,19 @@ bit13 =1 SDIO dataoutput is at positive edges (SDIO V2.0)
 
 /* SAR_?:0x60000D50 */
 #define SAR_CFG sar_[20]
-// Бит 1: запуск нового замера SAR
-// Бит 2..4: кол-во значений в SAR_DATA 0..7 -> 1..8
-// Бит 24..26: готовность r_state = 0
+// Р‘РёС‚ 1: Р·Р°РїСѓСЃРє РЅРѕРІРѕРіРѕ Р·Р°РјРµСЂР° SAR
+// Р‘РёС‚ 2..4: РєРѕР»-РІРѕ Р·РЅР°С‡РµРЅРёР№ РІ SAR_DATA 0..7 -> 1..8
+// Р‘РёС‚ 24..26: РіРѕС‚РѕРІРЅРѕСЃС‚СЊ r_state = 0
 /* SAR_?:0x60000D54 */
 #define SAR_TIM1 sar_[21]
 /* SAR_?:0x60000D58 */
 #define SAR_TIM2 sar_[22]
-/* SAR_?:0x60000D5С */
+/* SAR_?:0x60000D5РЎ */
 #define SAR_CFG1 sar_[23]
-// Бит 21: ?
+// Р‘РёС‚ 21: ?
 /* SAR_?:0x60000D60 */
 #define SAR_CFG2 sar_[24]
-// Бит 1: ?
+// Р‘РёС‚ 1: ?
 /* SAR_DATA : 0x60000D80 */
 #define SAR_DATA sar_[32]
 #define SAR_W0 	 sar_[32]

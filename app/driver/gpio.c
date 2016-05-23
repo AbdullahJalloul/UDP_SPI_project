@@ -75,7 +75,7 @@ void ICACHE_FLASH_ATTR gpio_config (GPIO_ConfigTypeDef *pGPIOConfig)
 	{
 		if ( (gpio_pin_mask >> io_num) & 0x1)
 		{
-			io_reg = * (GPIO_PIN_REG(io_num));
+			io_reg = *(GPIO_PIN_REG(io_num));
 
 			if ( (0x1 << io_num)
 			        & (GPIO_Pin_0 | GPIO_Pin_2 | GPIO_Pin_4 | GPIO_Pin_5))
