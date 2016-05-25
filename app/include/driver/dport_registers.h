@@ -23,89 +23,90 @@
 #endif	// #ifndef __IO
 
 /******************* DPORT bitfields ******************************************/
+// correct bit ascending
 
 typedef struct
 {
-	__I u32			dummy2				:30;
-	__IO unsigned	timer0_edge_int_en	:1;	// bit1: TIMER0 edge int enable
 	__IO unsigned	wdt_edge_int_en		:1;	// bit0: WDT edge int enable
+	__IO unsigned	timer0_edge_int_en	:1;	// bit1: TIMER0 edge int enable
+	__I u32			dummy2				:30;
 } dport_reg_1_t;
 
 typedef struct
 {
-	__I u32			dummy10			:22;
-	__IO unsigned	wait_spi_idle	:1;	// bit9: use wait SPI idle
-	__I u8			dummy2			:7;
-	__IO unsigned	cashe_empty		:1;	// bit1: cache empty flag bit
 	__IO unsigned	cashe_flush		:1;	// bit0: cache flush start bit
+	__IO unsigned	cashe_empty		:1;	// bit1: cache empty flag bit
+	__I u8			dummy2			:7;
+	__IO unsigned	spi_busy		:1;	// bit9: status SPI 0-wait, 1- busy
+	__I u32			dummy10			:22;
 } dport_reg_3_t;
 
 typedef struct
 {
-	__I u32			dummy1			:31;
 	__IO unsigned	clk_pre			:1;	// bit0: =1 CPU 160 MHz, = 0 CPU 80 MHz
+	__I u32			dummy1			:31;
 } dport_reg_5_t;
 
 typedef struct
 {
-	__I u32			dummy1			:31;
 	__IO unsigned	clk_pre			:1;	// bit0: =1 CPU 160 MHz, = 0 CPU 80 MHz
+	__I u32			dummy1			:31;
 } dport_reg_6_t;
 
 typedef struct
 {
-	__I u32			dummy10			:22;
-	__IO unsigned	i2s_isr			:1;	// bit9 is for i2s isr
-	__I unsigned	dummy8			:1;
-	__IO unsigned	spi1_isr		:1;	// bit7 is for hspi isr
-	__I unsigned	dummy6			:1;
-	__I unsigned	dummy5			:1;
-	__IO unsigned	spi0_isr		:1;	// bit4 is for spi isr
-	__I unsigned	dummy3			:1;
-	__IO unsigned	uart1_isr		:1;	// bit2 is for uart1 isr
-	__I unsigned	dummy1			:1;
 	__IO unsigned	uart0_isr		:1;	// bit0 is for uart0 isr
-} dport_reg_8_t;
+	__I unsigned	dummy1			:1;
+	__IO unsigned	uart1_isr		:1;	// bit2 is for uart1 isr
+	__I unsigned	dummy3			:1;
+	__IO unsigned	spi0_isr		:1;	// bit4 is for spi isr
+	__I unsigned	dummy5			:1;
+	__I unsigned	dummy6			:1;
+	__IO unsigned	spi1_isr		:1;	// bit7 is for hspi isr
+	__I unsigned	dummy8			:1;
+	__IO unsigned	i2s_isr			:1;	// bit9 is for i2s isr
+	__I u32			dummy10			:22;
+} isr_flag_t;
 
 typedef struct
 {
-	__I u32			dummy9			:23;
-	__IO unsigned	spi_C000		:1;	// bit8 16k IRAM base 0x4010C000 = SPI cache flash
-	__IO unsigned	spi_8000		:1;	// bit7 16k IRAM base 0x40108000 = SPI cache flash
 	__I u8			dummy0			:7;
+	__IO unsigned	spi_8000		:1;	// bit7 16k IRAM base 0x40108000 = SPI cache flash
+	__IO unsigned	spi_C000		:1;	// bit8 16k IRAM base 0x4010C000 = SPI cache flash
+	__I u32			dummy9			:23;
 } dport_reg_9_t;
 
 typedef struct
 {
-	__I u32			dummy8			:24;
-	__IO unsigned	two_on_cspi		:1;	// bit7: two spi masters on cspi (reg_cspi_overlap)
-	__IO unsigned	two_on_spi1		:1;	// bit6: two spi masters on hspi
-	__IO unsigned	spi1_high_prior	:1;	// bit5: hspi is with the higher prior
-	__I unsigned	dummy4			:1;
-	__IO unsigned	swap_uart1		:1;	// bit3: swap uart1 pins (u1rxd <-> u1cts), (u1txd <-> u1rts)
-	__IO unsigned	swap_uart0		:1;	// bit2: swap uart0 pins (u0rxd <-> u0cts), (u0txd <-> u0rts)
-	__IO unsigned	swap_two_spi	:1;	// bit1: swap two spi
 	__IO unsigned	swap_two_uart	:1;	// bit0: swap two uart
-} dport_reg_10_t;
+	__IO unsigned	swap_two_spi	:1;	// bit1: swap two spi
+	__IO unsigned	swap_uart0		:1;	// bit2: swap uart0 pins (u0rxd <-> u0cts), (u0txd <-> u0rts)
+	__IO unsigned	swap_uart1		:1;	// bit3: swap uart1 pins (u1rxd <-> u1cts), (u1txd <-> u1rts)
+	__I unsigned	dummy4			:1;
+	__IO unsigned	spi1_high_prior	:1;	// bit5: hspi is with the higher prior
+	__IO unsigned	two_on_spi1		:1;	// bit6: two spi masters on hspi
+	__IO unsigned	two_on_cspi		:1;	// bit7: two spi masters on cspi (reg_cspi_overlap)
+	__I u32			dummy8			:24;
+} peri_io_t;
 
 typedef struct
 {
-	__I u16			dummy16			:16;
 	__IO u16		tx_desc_debug	:16;	// SLC_TX_DESC_DEBUG[15:0] set to 0xCCCC
+	__I u16			dummy16			:16;
 } dport_reg_11_t;
 
 typedef struct
 {
-	__IO u32	nmi_int;
+	__IO u32	nmi_int;	// 0x3FF00000
 	union
 	{
-		__IO u32			reg_1;
+		__IO u32			reg_1;		// 0x3FF00004
 		__IO dport_reg_1_t	reg_1_bits;
 	};
-	__IO u32	reg_2;
+	__IO u32	reg_2;		// 0x3FF00008
 	union
 	{
-		__IO u32			reg_3;
+		__IO u32			reg_3;		// 0x3FF0000C
 		__IO dport_reg_3_t	reg_3_bits;
 	};
 	__IO u32	reg_4;
@@ -122,8 +123,8 @@ typedef struct
 	__IO u32	reg_7;
 	union
 	{
-		__IO u32			reg_8;	// 0x3ff00020 is isr flag register, (ESP8266 SPI Module User Guide)
-		__IO dport_reg_8_t	reg_8_bits;
+		__IO u32			isr_flag;	// 0x3ff00020 is isr flag register, (ESP8266 SPI Module User Guide)
+		__IO isr_flag_t		isr_flag_bits;
 	};
 	union
 	{
@@ -132,8 +133,8 @@ typedef struct
 	};
 	union
 	{
-		__IO u32			reg_10;	// PERI_IO_SWAP: 0x3FF00028
-		__IO dport_reg_10_t	reg_10_bits;
+		__IO u32			peri_io;	// PERI_IO_SWAP: 0x3FF00028
+		__IO peri_io_t		peri_io_bits;
 	};
 	union
 	{

@@ -1,10 +1,12 @@
 #ifndef SPI_APP_H
 #define SPI_APP_H
 
+#include "c_types.h"
 #include "ets_sys.h"
 #include "osapi.h"
 #include "spi_flash.h"
-#include "driver\spi_register.h"
+
+#include "spi_registers.h"
 
 #define SPI_SLAVE_DEBUG
 //SPI protocol selection

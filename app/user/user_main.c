@@ -5,30 +5,39 @@
 #include "driver/uart.h"
 
 #include "user_tcp_server.h"
+#include "global.h"
+
+
+/*******************************************************************************
+* режим работы и имя сети в esp8266.
+* Режим работы возле пульта - Access Point (0)
+* Переносной - station (1).
+* Имя сети состоит из базового имени "IP309_" и номера группы c.group 0-9 "IP309_0"..."IP309_9"
+* Пароль состоит из имени станции, перед ним символы "k38sS" = "k38sSIP309_0"
+* IP адрес у AP 192.168.0.2X, где X-номер группы 0-9
+* IP у station 192.168.0.3X, где X-номер группы 0-9
+* MAC адрес у AP "1a:fe:34:d6:dd:Xe", где X-номер группы 0-9
+* MAC адрес у station "1a:fe:34:d6:dd:X1", где X-номер группы 0-9
+* Режим работы UDP 
+* одиночное соединение
+* Порт у AP 1100
+* Порт у ST 1102
+*
+*******************************************************************************/
 
 /*********************** define constants *************************************/
-typedef enum 
-{
-	U_WIFI_AP_MODE = 0,
-	U_WIFI_STA_MODE
-} u_wifi_modes;
 
-typedef enum
+global g =
 {
-	U_STATE_STOP = 0,
-	U_STATE_SEARCH,
-	U_STATE_TRANSMIT
-} u_states;
+		"IP309_0",
+		"k38sSIP309_0",
+		IP4_WORD (192, 168, 0, 20),
+		IP4_WORD (192, 168, 0, 20),
+		IP4_WORD (255, 255, 255, 0),
 
-typedef struct _um_t
-{
-	u_wifi_modes	wifi_mode;	// режим wi-fi 0-AP 1-STA
-	u8				wifi_ch;	// канал wi-fi 0-9
-	u8				group_no;	// номер группы 0-9
-	u8				channel_no;	// номер канала 1-9, 0 - групповой
-	u_states		state;		// статус передачи 0-отключён, 1-поиск, 2-передача
-} um_t;
+};
 
+/************************ typedef func ****************************************/
 void	at_u_setup_test		(uint8_t id);
 void	at_u_setup_query	(uint8_t id);
 void	at_u_setup_setup	(uint8_t id, char *pPara);

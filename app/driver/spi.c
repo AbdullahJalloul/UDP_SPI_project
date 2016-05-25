@@ -1,7 +1,11 @@
+#include "c_types.h"
 #include "driver/spi.h"
-#include "gpio.h"
+#include "driver/gpio.h"
+#include "driver/dport_registers.h"
+#include "driver/iomux_registers.h"
 #include "user_interface.h"
 #include "mem.h"
+#include	"eagle_soc.h"
 
 #define CACHE_FLASH_CTRL_REG 0x3ff0000C
 #define CACHE_FLUSH_START_BIT BIT0
@@ -37,11 +41,19 @@ void ICACHE_FLASH_ATTR spi_master_init (void)
 #define SPI_DIV_CLK_H		((SPI_DIV_CLK_N + 1) / 2 - 1)	// ��� ������� ���
 #define SPI_DIV_CLK_L		(SPI_DIV_CLK_N)					// ��� ������� ���
 
-	pin_func_select (PERIPHS_IO_MUX_MTDI_U, 2);	//configure io12 to hspi_miso mode
-	pin_func_select (PERIPHS_IO_MUX_MTCK_U, 2);//configure io13 to Hspi_mosi mode
-	pin_func_select (PERIPHS_IO_MUX_MTMS_U, 2);//configure io14 to Hspi_clk mode
-	pin_func_select (PERIPHS_IO_MUX_MTDO_U, 2);//configure io15 to Hspi_cs mode
-
+//	pin_func_select (PERIPHS_IO_MUX_MTDI_U, GPIO_MUX_FUNC_2);
+	IOMUX->gpio12_mux &= ~GPIO_MUX_FUNC_MASK;
+	IOMUX->gpio12_mux |= GPIO12_FUNC_HSPIQ_MISO;	//configure io12 to hspi_miso mode
+//	pin_func_select (PERIPHS_IO_MUX_MTCK_U, 2);
+	IOMUX->gpio13_mux &= ~GPIO_MUX_FUNC_MASK;
+	IOMUX->gpio13_mux |= GPIO13_FUNC_HSPID_MOSI;	//configure io13 to Hspi_mosi mode
+//	pin_func_select (PERIPHS_IO_MUX_MTMS_U, 2);
+	IOMUX->gpio14_mux &= ~GPIO_MUX_FUNC_MASK;
+	IOMUX->gpio14_mux |= GPIO14_FUNC_HSPI_CLK;	//configure io14 to Hspi_clk mode
+//	pin_func_select (PERIPHS_IO_MUX_MTDO_U, 2);//configure io15 to Hspi_cs mode
+	IOMUX->gpio15_mux &= ~GPIO_MUX_FUNC_MASK;
+	IOMUX->gpio15_mux |= GPIO15_FUNC_HSPI_CS;
+	
 	SPI1->user |= SPI_USER_CS_SETUP | SPI_USER_CS_HOLD | SPI_USER_COMMAND;
 	SPI1->user &= ~SPI_USER_FLASH_MODE;
 	SPI1->clock_bits.equ_sysclk = 0;
@@ -228,27 +240,27 @@ void ICACHE_FLASH_ATTR spi_WR_espslave (void)
 
 }
 
-void ICACHE_FLASH_ATTR set_data (void)	// ���������� ������ SPI (64 �����)
+void ICACHE_FLASH_ATTR set_data (void)
 {
-	WRITE_PERI_REG (SPI_W0(HSPI), 0x05040302);
-	WRITE_PERI_REG (SPI_W1(HSPI), 0x09080706);
-	WRITE_PERI_REG (SPI_W2(HSPI), 0x0d0c0b0a);
-	WRITE_PERI_REG (SPI_W3(HSPI), 0x11100f0e);
-	WRITE_PERI_REG (SPI_W4(HSPI), 0x15141312);
-	WRITE_PERI_REG (SPI_W5(HSPI), 0x19181716);
-	WRITE_PERI_REG (SPI_W6(HSPI), 0x1d1c1b1a);
-	WRITE_PERI_REG (SPI_W7(HSPI), 0x21201f1e);
-	WRITE_PERI_REG (SPI_W8(HSPI), 0x05040302);
-	WRITE_PERI_REG (SPI_W9(HSPI), 0x09080706);
-	WRITE_PERI_REG (SPI_W10(HSPI), 0x0d0c0b0a);
-	WRITE_PERI_REG (SPI_W11(HSPI), 0x11100f0e);
-	WRITE_PERI_REG (SPI_W12(HSPI), 0x15141312);
-	WRITE_PERI_REG (SPI_W13(HSPI), 0x19181716);
-	WRITE_PERI_REG (SPI_W14(HSPI), 0x1d1c1b1a);
-	WRITE_PERI_REG (SPI_W15(HSPI), 0x21201f1e);
+	SPI1->w0 = 0x05040302;
+	SPI1->w1 = 0x09080706;
+	SPI1->w2 = 0x0d0c0b0a;
+	SPI1->w3 = 0x11100f0e;
+	SPI1->w4 = 0x15141312;
+	SPI1->w5 = 0x19181716;
+//	SPI1->w6 = 0x1d1c1b1a;
+//	SPI1->w7 = 0x21201f1e;
+	SPI1->w8 = 0x05040302;
+	SPI1->w9 = 0x09080706;
+	SPI1->w10 = 0x0d0c0b0a;
+	SPI1->w11 = 0x11100f0e;
+	SPI1->w12 = 0x15141312;
+	SPI1->w13 =0x19181716 ;
+	SPI1->w14 = 0x1d1c1b1a;
+	SPI1->w15 = 0x21201f1e;
 }
 
-//-----------------------------------------------------------------------------------------------------------------------------
+//-
 #ifdef SPI_SLAVE_DEBUG
 /******************************************************************************
  * FunctionName : spi_slave_init
@@ -352,11 +364,21 @@ void ICACHE_FLASH_ATTR gpio_init (void)
 
 #if	TWO_INTR_LINE_PROTOCOL
 
-	pin_func_select (PERIPHS_IO_MUX_GPIO2_U, FUNC_GPIO2);
-	pin_func_select (PERIPHS_IO_MUX_GPIO4_U, FUNC_GPIO4);
-	GPIO_OUTPUT_SET (0, 1);
-	GPIO_OUTPUT_SET (2, 0);
-	GPIO_OUTPUT_SET (4, 1);
+//	pin_func_select (PERIPHS_IO_MUX_GPIO2_U, FUNC_GPIO2);
+	IOMUX->gpio2_mux &= ~GPIO_MUX_FUNC_MASK;
+//	pin_func_select (PERIPHS_IO_MUX_GPIO4_U, FUNC_GPIO4);
+	IOMUX->gpio4_mux &= ~GPIO_MUX_FUNC_MASK;
+	
+			
+//	GPIO_OUTPUT_SET (0, 1);
+	GPIO->out_w1ts_bits.pin_0 = 1;
+	GPIO->enable_w1ts_bits.pin_0 = 1;
+//	GPIO_OUTPUT_SET (2, 0);
+	GPIO->out_w1tc_bits.pin_2 = 1;
+	GPIO->enable_w1tc_bits.pin_2 = 1;
+//	GPIO_OUTPUT_SET (4, 1);
+	GPIO->out_w1ts_bits.pin_4 = 1;
+	GPIO->enable_w1ts_bits.pin_4 = 1;
 
 #endif	// #if	TWO_INTR_LINE_PROTOCOL
 }
@@ -402,7 +424,8 @@ void spi_slave_isr_handler (void *para)
 
 		else if (regvalue & SPI_SLV_WR_BUF_DONE)
 		{
-			GPIO_OUTPUT_SET (0, 0);
+			GPIO->out_w1tc_bits.pin_0 = 1;	// GPIO_OUTPUT_SET (0, 0);
+			GPIO->enable_w1tc_bits.pin_0 = 1;
 			state = 0;
 			idx = 0;
 			while (idx < 8)
@@ -422,28 +445,28 @@ void spi_slave_isr_handler (void *para)
 				calvalue = (calvalue * calvalue * calvalue) % 255;
 				if (spi_data[idx << 2] != calvalue)
 				{
-					GPIO_OUTPUT_SET(4, 0);
+					GPIO->out_w1tc_bits.pin_4 = 1;	// GPIO_OUTPUT_SET(4, 0);
 					system_os_post(USER_TASK_PRIO_1, DATA_ERROR, regvalue);
 				}
 				calvalue = (send_data>>8) & 0xff;
 				calvalue = (calvalue*calvalue*calvalue)%255;
 				if (spi_data[(idx << 2) + 1] != calvalue)
 				{
-					GPIO_OUTPUT_SET(4, 0);
+					GPIO->out_w1tc_bits.pin_4 = 1;	// GPIO_OUTPUT_SET(4, 0);
 					system_os_post(USER_TASK_PRIO_1, DATA_ERROR, regvalue);
 				}
 				calvalue = (send_data>>16) & 0xff;
 				calvalue = (calvalue*calvalue*calvalue)%255;
 				if (spi_data[(idx << 2) + 2] != calvalue)
 				{
-					GPIO_OUTPUT_SET(4, 0);
+					GPIO->out_w1tc_bits.pin_4 = 1; // GPIO_OUTPUT_SET(4, 0);
 					system_os_post(USER_TASK_PRIO_1, DATA_ERROR, regvalue);
 				}
 				calvalue = (send_data>>24) & 0xff;
 				calvalue = (calvalue*calvalue*calvalue)%255;
 				if (spi_data[(idx << 2) + 3] != calvalue)
 				{
-					GPIO_OUTPUT_SET (4, 0);
+					GPIO->out_w1tc_bits.pin_4 = 1;	// GPIO_OUTPUT_SET (4, 0);
 					system_os_post (USER_TASK_PRIO_1, DATA_ERROR, regvalue);
 				}
 			}
@@ -452,22 +475,22 @@ void spi_slave_isr_handler (void *para)
 			{
 				WRITE_PERI_REG (SPI_W8(HSPI)+(idx << 2), READ_PERI_REG (SPI_W0(HSPI)+(idx << 2)));
 			}
-			GPIO_OUTPUT_SET(2, 1);
-			GPIO_OUTPUT_SET(0, 1);
-			GPIO_OUTPUT_SET(4, 1);
+			GPIO->out_w1ts_bits.pin_2 = 1;	// GPIO_OUTPUT_SET(2, 1);		
+			GPIO->out_w1ts_bits.pin_0 = 1;	// GPIO_OUTPUT_SET(0, 1);
+			GPIO->out_w1ts_bits.pin_4 = 1;	// GPIO_OUTPUT_SET(4, 1);
 			SET_PERI_REG_MASK (SPI_SLAVE(HSPI), SPI_SLV_WR_BUF_DONE_EN);
 
 		}
 
 		else if(regvalue & SPI_SLV_RD_BUF_DONE)
-		{
-			GPIO_OUTPUT_SET(2, 0);
+		{		
+			GPIO->out_w1tc_bits.pin_2 = 1;	// GPIO_OUTPUT_SET(2, 0);
 			state = 1;
 		}
 
 		if(regvalue & SPI_SLV_RD_STA_DONE)
 		{
-			GPIO_OUTPUT_SET(4, 0);
+			GPIO->out_w1tc_bits.pin_4 = 1;	// GPIO_OUTPUT_SET(4, 0);
 			if(state)
 			{
 				system_os_post(USER_TASK_PRIO_1, STATUS_R_IN_WR, regvalue);
@@ -478,21 +501,21 @@ void spi_slave_isr_handler (void *para)
 				system_os_post(USER_TASK_PRIO_1, STATUS_R_IN_RD, regvalue);
 				state = 1;
 			}
-			GPIO_OUTPUT_SET(4, 1);
+			GPIO->out_w1ts_bits.pin_4 = 1;	// GPIO_OUTPUT_SET(4, 1);
 		}
 
 		if(regvalue & SPI_SLV_WR_STA_DONE)
 		{
-			GPIO_OUTPUT_SET(4, 0);
+			GPIO->out_w1tc_bits.pin_4 = 1;	// GPIO_OUTPUT_SET(4, 0);
 			system_os_post(USER_TASK_PRIO_1, STATUS_W, regvalue);
-			GPIO_OUTPUT_SET(4, 1);
+			GPIO->out_w1ts_bits.pin_4 = 1;	// GPIO_OUTPUT_SET(4, 1);
 		}
 
 		if ((regvalue & SPI_TRANS_DONE) && ((regvalue & 0xf) == 0))
 		{
-			//		GPIO_OUTPUT_SET(4, 0);
+			GPIO->out_w1tc_bits.pin_4 = 1;	// GPIO_OUTPUT_SET(4, 0);
 			system_os_post(USER_TASK_PRIO_1, TR_DONE_ALONE, regvalue);
-			//		GPIO_OUTPUT_SET(4, 1);	
+			GPIO->out_w1ts_bits.pin_4 = 1;	// GPIO_OUTPUT_SET(4, 1);	
 		}
 
 	}
@@ -565,28 +588,28 @@ void spi_slave_isr_sta(void *para)
 				calvalue = (calvalue * calvalue * calvalue) % 255;
 				if (spi_data[idx << 2] != calvalue)
 				{
-					GPIO_OUTPUT_SET(4, 0);
+					GPIO->out_w1tc_bits.pin_4 = 1;	// GPIO_OUTPUT_SET(4, 0);
 					system_os_post(USER_TASK_PRIO_1, DATA_ERROR, regvalue);
 				}
 				calvalue = (send_data >> 8) & 0xff;
 				calvalue = (calvalue * calvalue * calvalue) % 255;
 				if (spi_data[(idx << 2) + 1] != calvalue)
 				{
-					GPIO_OUTPUT_SET(4, 0);
+					GPIO->out_w1tc_bits.pin_4 = 1;	// GPIO_OUTPUT_SET(4, 0);
 					system_os_post(USER_TASK_PRIO_1, DATA_ERROR, regvalue);
 				}
 				calvalue = (send_data>>16) & 0xff;
 				calvalue = (calvalue * calvalue * calvalue) % 255;
 				if(spi_data[(idx << 2) + 2] != calvalue)
 				{
-					GPIO_OUTPUT_SET (4, 0);
+					GPIO->out_w1tc_bits.pin_4 = 1;	// GPIO_OUTPUT_SET (4, 0);
 					system_os_post (USER_TASK_PRIO_1, DATA_ERROR, regvalue);
 				}
 				calvalue = (send_data >> 24) & 0xff;
 				calvalue = (calvalue * calvalue * calvalue) % 255;
 				if(spi_data[(idx << 2) + 3] != calvalue)
 				{
-					GPIO_OUTPUT_SET(4, 0);
+					GPIO->out_w1tc_bits.pin_4 = 1;	// GPIO_OUTPUT_SET(4, 0);
 					system_os_post (USER_TASK_PRIO_1, DATA_ERROR, regvalue);
 				}
 			}
@@ -601,7 +624,7 @@ void spi_slave_isr_sta(void *para)
 			spi_sta.byte_value = READ_PERI_REG (SPI_RD_STATUS(HSPI)) & 0xff;
 			spi_sta.elm_value.rd_empty = 0;
 			WRITE_PERI_REG (SPI_RD_STATUS(HSPI), (uint32)spi_sta.byte_value);
-			GPIO_OUTPUT_SET(0, 1);
+			GPIO->out_w1ts_bits.pin_0 = 1;	// GPIO_OUTPUT_SET(0, 1);
 
 		}
 		else if (regvalue & SPI_SLV_RD_BUF_DONE)
@@ -610,13 +633,13 @@ void spi_slave_isr_sta(void *para)
 			spi_sta.elm_value.comm_cnt++;
 			spi_sta.elm_value.rd_empty = 1;
 			WRITE_PERI_REG (SPI_RD_STATUS(HSPI), (uint32)spi_sta.byte_value);
-			GPIO_OUTPUT_SET(0, 1);
+			GPIO->out_w1ts_bits.pin_0 = 1;	// GPIO_OUTPUT_SET(0, 1);
 			state = 1;
 		}
 
 		if (regvalue & SPI_SLV_RD_STA_DONE)
 		{
-			GPIO_OUTPUT_SET(0, 0);
+			GPIO->out_w1tc_bits.pin_0 = 1;	// GPIO_OUTPUT_SET(0, 0);
 		}
 
 		if (regvalue & SPI_SLV_WR_STA_DONE)
@@ -651,7 +674,7 @@ void ICACHE_FLASH_ATTR set_miso_data (void)
 		WRITE_PERI_REG (SPI_W13 (HSPI), 0x19181716);
 		WRITE_PERI_REG (SPI_W14 (HSPI), 0x1d1c1b1a);
 		WRITE_PERI_REG (SPI_W15 (HSPI), 0x21201f1e);
-		GPIO_OUTPUT_SET (2, 1);
+		GPIO->out_w1ts_bits.pin_2 = 1;	// GPIO_OUTPUT_SET (2, 1);
 	}
 }
 
@@ -784,7 +807,7 @@ void hspi_cr_start(const uint8_t cmd, const uint8_t read_length)
  
 void  __attribute__((optimize("O2"))) hspi_int_handler(void* *para)
 {
-    enum spi_rx_state temp_rx_state;  // локальная копия volatile переменной
+/*    enum spi_rx_state temp_rx_state;  // локальная копия volatile переменной
     uint32_t regvalue;
  
     if(READ_PERI_REG(0x3ff00020) & BIT4)
@@ -805,18 +828,18 @@ void  __attribute__((optimize("O2"))) hspi_int_handler(void* *para)
 // TODO:		hspi_cr_start (INSTRUCTION_READ_STATUS, 62);
 //		mcp251x.mcp_rx_state = RXSTATE_FAST_POLLING ;
 	}
-}
+*/}
  
 void ICACHE_FLASH_ATTR hspi_init()
 {
     uint32 regvalue;
  
     // gpio mux
-    WRITE_PERI_REG (PERIPHS_IO_MUX, 0x105);
-    pin_func_select (PERIPHS_IO_MUX_MTDI_U, 2); // HSPIQ MISO
-    pin_func_select (PERIPHS_IO_MUX_MTCK_U, 2); // HSPID MOSI
-    pin_func_select (PERIPHS_IO_MUX_MTMS_U, 2); // CLK
-    pin_func_select (PERIPHS_IO_MUX_MTDO_U, 2); // CS
+//    WRITE_PERI_REG (PERIPHS_IO_MUX, 0x105);
+//    pin_func_select (PERIPHS_IO_MUX_MTDI_U, 2); // HSPIQ MISO
+//    pin_func_select (PERIPHS_IO_MUX_MTCK_U, 2); // HSPID MOSI
+//    pin_func_select (PERIPHS_IO_MUX_MTMS_U, 2); // CLK
+//    pin_func_select (PERIPHS_IO_MUX_MTDO_U, 2); // CS
  
 #if 0
     WRITE_PERI_REG(SPI_CLOCK(HSPI),
@@ -847,9 +870,9 @@ void ICACHE_FLASH_ATTR hspi_init()
 
 extern uint32_t *spi_fifo;
 
-extern void hspi_init(void);
+//extern void hspi_init(void);
 extern void hspi_send_data(const uint8_t * data, uint8_t datasize);
-extern void hspi_send_uint16_r(const uint16_t data, int32_t repeats);
+//extern void hspi_send_uint16_r(const uint16_t data, int32_t repeats);
 inline void hspi_wait_ready(void){while (READ_PERI_REG(SPI_FLASH_CMD(HSPI))&SPI_FLASH_USR);}
 
 inline void hspi_prepare_tx(uint32_t bytecount)
@@ -887,7 +910,7 @@ inline void hspi_send_uint32(uint32_t data)
 }
 
 
-#include "hspi.h"
+//#include "hspi.h"
 
 /*
 Pinout:
@@ -903,16 +926,17 @@ DC GPIO2
 #define __min(a,b) ((a > b) ? (b):(a))
 uint32_t *spi_fifo;
 
-void hspi_init(void)
+/*void hspi_init(void)
 {
 	spi_fifo = (uint32_t*)SPI_FLASH_C0(HSPI);
 
-	WRITE_PERI_REG(PERIPHS_IO_MUX, 0x105); //clear bit9
+//	WRITE_PERI_REG(PERIPHS_IO_MUX, 0x105); //clear bit9
+	IOMUX->gpio_mux_cfg_bits.spi1_sys_clk = 0;
 
-	PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDI_U, 2); // HSPIQ MISO GPIO12
-	PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTCK_U, 2); // HSPID MOSI GPIO13
-	PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTMS_U, 2); // CLK GPIO14
-	PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDO_U, 2); // CS GPIO15
+	pin_func_select (PERIPHS_IO_MUX_MTDI_U, 2); // HSPIQ MISO GPIO12
+	pin_func_select (PERIPHS_IO_MUX_MTCK_U, 2); // HSPID MOSI GPIO13
+	pin_func_select (PERIPHS_IO_MUX_MTMS_U, 2); // CLK GPIO14
+	pin_func_select (PERIPHS_IO_MUX_MTDO_U, 2); // CS GPIO15
 
 
 	// SPI clock = CPU clock / 10 / 4
@@ -931,7 +955,7 @@ void hspi_init(void)
 	WRITE_PERI_REG(SPI_FLASH_USER(HSPI), regvalue);
 }
 
-void hspi_send_uint16_r(uint16_t data, int32_t repeats)
+void hspi_send_uint16_r (uint16_t data, int32_t repeats)
 {
 	uint32_t i;
 	uint32_t word = data << 16 | data;
@@ -946,9 +970,9 @@ void hspi_send_uint16_r(uint16_t data, int32_t repeats)
 		hspi_start_tx();
 		repeats -= bytes_to_transfer / 2;
 	}
-}
+}*/
 
-void hspi_send_data(const uint8_t * data, uint8_t datasize)
+void hspi_send_data (const uint8_t * data, uint8_t datasize)
 {
 	uint32_t *_data = (uint32_t*)data;
 	uint8_t i;
@@ -959,3 +983,4 @@ void hspi_send_data(const uint8_t * data, uint8_t datasize)
 		spi_fifo[i] = _data[i];
 	hspi_start_tx();
 }
+

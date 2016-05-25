@@ -6,8 +6,74 @@
 #ifndef __GPIO_H__
 #define __GPIO_H__
 
+#include "c_types.h"
 #include "ets_sys.h"
-#include "gpio_register.h"
+#include "gpio_registers.h"
+
+
+//#define PERIPHS_IO_MUX_FUNC             0x13
+//define PERIPHS_IO_MUX_FUNC_S           4
+#define PERIPHS_IO_MUX_PULLUP           BIT7
+#define PERIPHS_IO_MUX_PULLUP2          BIT6
+#define PERIPHS_IO_MUX_SLEEP_PULLUP     BIT3
+#define PERIPHS_IO_MUX_SLEEP_PULLUP2    BIT2
+#define PERIPHS_IO_MUX_SLEEP_OE         BIT1
+#define PERIPHS_IO_MUX_OE               BIT0
+
+#define PERIPHS_IO_MUX_CONF_U           ((volatile uint32 *)0x60000800)
+#define SPI0_CLK_EQU_SYS_CLK            BIT8
+#define SPI1_CLK_EQU_SYS_CLK            BIT9
+#define PERIPHS_IO_MUX_MTDI_U           ((volatile uint32 *)0x60000804)
+#define FUNC_GPIO12                     3
+#define PERIPHS_IO_MUX_MTCK_U           ((volatile uint32 *)0x60000808)
+#define FUNC_GPIO13                     3
+#define PERIPHS_IO_MUX_MTMS_U           ((volatile uint32 *)0x6000080C)
+#define FUNC_GPIO14                     3
+#define PERIPHS_IO_MUX_MTDO_U           ((volatile uint32 *)0x60000810)
+#define FUNC_GPIO15                     3
+#define FUNC_U0RTS                      4
+#define PERIPHS_IO_MUX_U0RXD_U          ((volatile uint32 *)0x60000814)
+#define FUNC_GPIO3                      3
+#define PERIPHS_IO_MUX_U0TXD_U          ((volatile uint32 *)0x60000818)
+#define FUNC_U0TXD                      0
+#define FUNC_GPIO1                      3
+#define PERIPHS_IO_MUX_SD_CLK_U         ((volatile uint32 *)0x6000081c)
+#define FUNC_SDCLK                      0
+#define FUNC_SPICLK                     1
+#define PERIPHS_IO_MUX_SD_DATA0_U       ((volatile uint32 *)0x60000820)
+#define FUNC_SDDATA0                    0
+#define FUNC_SPIQ                       1
+#define FUNC_U1TXD                      4
+#define PERIPHS_IO_MUX_SD_DATA1_U       ((volatile uint32 *)0x60000824)
+#define FUNC_SDDATA1                    0
+#define FUNC_SPID                       1
+#define FUNC_U1RXD                      4
+#define FUNC_SDDATA1_U1RXD              7
+#define PERIPHS_IO_MUX_SD_DATA2_U       ((volatile uint32 *)0x60000828)
+#define FUNC_SDDATA2                    0
+#define FUNC_SPIHD                      1
+#define FUNC_GPIO9                      3
+#define PERIPHS_IO_MUX_SD_DATA3_U       ((volatile uint32 *)0x6000082c)
+#define FUNC_SDDATA3                    0
+#define FUNC_SPIWP                      1
+#define FUNC_GPIO10                     3
+#define PERIPHS_IO_MUX_SD_CMD_U         ((volatile uint32 *)0x60000830)
+#define FUNC_SDCMD                      0
+#define FUNC_SPICS0                     1
+#define PERIPHS_IO_MUX_GPIO0_U          ((volatile uint32 *)0x60000834)
+#define FUNC_GPIO0                      0
+#define PERIPHS_IO_MUX_GPIO2_U          ((volatile uint32 *)0x60000838)
+#define FUNC_GPIO2                      0
+#define FUNC_U1TXD_BK                   2
+#define FUNC_U0TXD_BK                   4
+#define PERIPHS_IO_MUX_GPIO4_U          ((volatile uint32 *)0x6000083C)
+#define FUNC_GPIO4                      0
+#define PERIPHS_IO_MUX_GPIO5_U          ((volatile uint32 *)0x60000840)
+#define FUNC_GPIO5                      0
+
+#define PIN_PULLUP_DIS(PIN_NAME)		CLEAR_PERI_REG_MASK (PIN_NAME, PERIPHS_IO_MUX_PULLUP)
+#define PIN_PULLUP_EN(PIN_NAME)			SET_PERI_REG_MASK (PIN_NAME, PERIPHS_IO_MUX_PULLUP)
+
 
 #define GPIO_Pin_0              (BIT(0))  /* Pin 0 selected */
 #define GPIO_Pin_1              (BIT(1))  /* Pin 1 selected */
@@ -100,12 +166,12 @@ typedef struct
 	GPIO_INT_TYPE GPIO_IntrType;
 } GPIO_ConfigTypeDef;
 
-#define GPIO_OUTPUT_SET (gpio_no, bit_value) \
-	do {\
+/*#define GPIO_OUTPUT_SET (gpio_no, bit_value)	do {\
 	GPIO->out_w1ts = bit_value << gpio_no; \
 	GPIO->out_w1tc = ((~bit_value) & 0x01) << gpio_no; \
 	GPIO->enable_w1ts = 1 << gpio_no; \
 	} while (0)
+*/
 //    gpio_output_conf (bit_value << gpio_no, ((~bit_value) & 0x01) << gpio_no, 1 << gpio_no, 0)
 
 #define GPIO_OUTPUT(gpio_bits, bit_value) \

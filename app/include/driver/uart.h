@@ -1,7 +1,8 @@
 #ifndef UART_APP_H
 #define UART_APP_H
 
-#include "uart_register.h"
+#include "c_types.h"
+#include "uart_registers.h"
 
 #define RX_BUFF_SIZE    0x100
 #define TX_BUFF_SIZE    100
