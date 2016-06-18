@@ -13,6 +13,7 @@
 #include "ets_sys.h"
 #include "osapi.h"
 #include "driver/uart.h"
+#include "driver/iomux_registers.h"
 
 #define UART0   0
 #define UART1   1
@@ -32,37 +33,59 @@ static void uart0_rx_intr_handler (void *para);
  *******************************************************************************/
 static void ICACHE_FLASH_ATTR uart_config (uint8 uart_no)
 {
+	UART_TypeDef *uart_p;
+	
 	if (uart_no == UART1)
 	{
-		pin_func_select (PERIPHS_IO_MUX_GPIO2_U, FUNC_U1TXD_BK);
+		uart_p = UART_1;
+		IOMUX->gpio2_mux &= ~GPIO_MUX_FUNC_MASK;
+		IOMUX->gpio2_mux |= GPIO2_FUNC_U1TXD;
 	}
 	else
 	{
+		uart_p = UART_0;
 		/* rcv_buff size if 0x100 */
-		ETS_UART_INTR_ATTACH(uart0_rx_intr_handler, & (UartDev.rcv_buff));
-		PIN_PULLUP_DIS(PERIPHS_IO_MUX_U0TXD_U);
-		pin_func_select (PERIPHS_IO_MUX_U0TXD_U, FUNC_U0TXD);
+		ets_isr_attach (5, uart0_rx_intr_handler, (void *)&UartDev.rcv_buff);
+		IOMUX->gpio1_mux_bits.pullup = 0;	
+
+		IOMUX->gpio1_mux_u0_txd &= ~GPIO_MUX_FUNC_MASK;
+		IOMUX->gpio1_mux_u0_txd |= GPIO1_FUNC_U0TXD;
+
+		IOMUX->gpio15_mux_mtdo &= ~GPIO_MUX_FUNC_MASK;
+		IOMUX->gpio15_mux_mtdo |= GPIO15_FUNC_U0RTS;
 	}
-
+	
 	uart_div_modify (uart_no, UART_CLK_FREQ / (UartDev.baut_rate));
-
-	WRITE_PERI_REG(UART_CONF0(uart_no), UartDev.exist_parity
+	
+	uart_p->uart_conf0 = (UartDev.exist_parity
 	        | UartDev.parity
 	        | (UartDev.stop_bits << UART_STOP_BIT_NUM_S)
 	        | (UartDev.data_bits << UART_BIT_NUM_S));
-
+	
 	//clear rx and tx fifo,not ready
-	SET_PERI_REG_MASK(UART_CONF0(uart_no), UART_RXFIFO_RST | UART_TXFIFO_RST);
-	CLEAR_PERI_REG_MASK(UART_CONF0(uart_no), UART_RXFIFO_RST | UART_TXFIFO_RST);
-
-	//set rx fifo trigger
-	WRITE_PERI_REG(UART_CONF1(uart_no),
-	        (UartDev.rcv_buff.TrigLvl & UART_RXFIFO_FULL_THRHD) << UART_RXFIFO_FULL_THRHD_S);
-
+	uart_p->uart_conf0 |= UART_CONF0_RXFIFO_RST | UART_CONF0_TXFIFO_RST;	
+	uart_p->uart_conf0 &= ~(UART_CONF0_RXFIFO_RST | UART_CONF0_TXFIFO_RST);	
+	
+	if (uart_no == UART0)
+	{
+		//set rx fifo trigger
+		uart_p->uart_conf1_bits.rx_fifo_full_trhd = 0x10;
+		uart_p->uart_conf1_bits.rx_flow_trhd = 0x10;
+		uart_p->uart_conf1_bits.rx_flow_en = 1;
+		uart_p->uart_conf1_bits.rx_tout_trhd = 0x02;
+		uart_p->uart_conf1_bits.rx_tout_en = 1;
+		
+		uart_p->uart_int_ena |= UART_INT_ENA_RXFIFO_TOUT | UART_INT_ENA_FRM_ERR;
+	}
+	else
+	{
+		uart_p->uart_conf1_bits.rx_fifo_full_trhd = UartDev.rcv_buff.TrigLvl;
+	}
+	
 	//clear all interrupt
-	WRITE_PERI_REG(UART_INT_CLR(uart_no), 0xffff);
+	uart_p->uart_int_clr = UART_INT_CLR_MASK;
 	//enable rx_interrupt
-	SET_PERI_REG_MASK(UART_INT_ENA(uart_no), UART_RXFIFO_FULL_INT_ENA);
+	uart_p->uart_int_ena_bits.rx_fifo_full = 1;
 }
 
 /******************************************************************************

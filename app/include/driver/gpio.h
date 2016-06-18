@@ -8,7 +8,7 @@
 
 #include "c_types.h"
 #include "ets_sys.h"
-#include "gpio_registers.h"
+#include "driver/gpio_registers.h"
 
 
 //#define PERIPHS_IO_MUX_FUNC             0x13
@@ -183,7 +183,7 @@ typedef struct
 #define GPIO_AS_OUTPUT(gpio_bits)   (GPIO->enable_w1ts = gpio_bits)
 #define GPIO_INPUT_GET(gpio_no)     ((GPIO->in >> gpio_no) & BIT0)
 
-void gpio_config1		(gpio_config_t *config);
+void gpio_config1		(gpio_int_st_t *config);
 void gpio16_output_conf	(void);
 void gpio16_output_set	(uint8 value);
 void gpio16_input_conf	(void);

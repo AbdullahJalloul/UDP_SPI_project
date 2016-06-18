@@ -76,7 +76,7 @@
 #define UART_GLITCH_FILT_S                  8
 #define UART_AUTOBAUD_EN                    BIT0
 
-#define UART_STATUS(i)                  (REG_UART_BASE(i) + 0x1C)
+//#define UART_STATUS(i)                  (REG_UART_BASE(i) + 0x1C)
 #define UART_TXD                            BIT31
 #define UART_RTSN                           BIT30
 #define UART_DTRN                           BIT29
@@ -158,8 +158,8 @@
 // correct bit ascending
 typedef struct
 {
-	__I u8		rx_fifo_rd_byte	:8;	// R/W share the same address
-	__I u32		dummy			:24;
+	__I unsigned	rx_fifo_rd_byte	:8;	// R/W share the same address
+	__I unsigned	dummy8			:24;
 } uart_fifo_t;
 
 typedef struct
@@ -173,7 +173,7 @@ typedef struct
 	__I unsigned	cts_chg			:1;	// The interrupt raw bit for CTS changing level
 	__I unsigned	brk_det			:1;	// The interrupt raw bit for Rx byte start error
 	__I unsigned	rx_fifo_tout	:1;	// The interrupt raw bit for Rx time-out interrupt(depands on the UART_RX_TOUT_THRHD)
-	__I u32			dummy			:23;
+	__I unsigned	dummy9			:23;
 } uart_int_raw_t;
 
 typedef struct
@@ -187,7 +187,7 @@ typedef struct
 	__I unsigned	cts_chg			:1;	// The interrupt state bit for CTS changing level
 	__I unsigned	brk_det			:1;	// The interrupt state bit for rx byte start error
 	__I unsigned	rx_fifo_tout	:1;	// The interrupt state bit for Rx time-out event
-	__I u32			dummy			:23;
+	__I unsigned	dummy9			:23;
 } uart_int_st_t;
 
 typedef struct
@@ -201,7 +201,7 @@ typedef struct
 	__IO unsigned	cts_chg			:1;	// The interrupt enable bit for CTS changing level
 	__IO unsigned	brk_det			:1;	// The interrupt enable bit for rx byte start error
 	__IO unsigned	rx_fifo_tout	:1;	// The interrupt enable bit for rx time-out interrupt
-	__IO u32		dummy			:23;
+	__IO unsigned	dummy9			:23;
 } uart_int_ena_t;
 
 typedef struct
@@ -215,32 +215,32 @@ typedef struct
 	__O unsigned	cts_chg			:1;	// Set this bit to clear the CTS changing interrupt
 	__O unsigned	brk_det			:1;	// Set this bit to clear the rx byte start interrupt
 	__O unsigned	rx_fifo_tout	:1;	// Set this bit to clear the rx time-out interrupt
-	__O u32			dummy			:23;
+	__O unsigned	dummy9			:23;
 } uart_int_clr_t;
 
 typedef struct
 {
-	__IO u32		clk_div		:20;	// BAUDRATE = UART_CLK_FREQ / UART_CLKDIV
-	__IO u16		dummy20		:12;
+	__IO unsigned	clk_div		:20;	// BAUDRATE = UART_CLK_FREQ / UART_CLKDIV
+	__IO unsigned	dummy20		:12;
 }uart_clk_div_t;
 
 typedef struct
 {
 	__IO unsigned	autobaud_en	:1;
-	__I u8			dummy1		:7;
-	__IO u8			glitch_flt	:8;
-	__I u16			dummy16		:16;
+	__I unsigned	dummy1		:7;
+	__IO unsigned	glitch_flt	:8;
+	__I unsigned	dummy16		:16;
 }uart_autobaud_t;
 
 typedef struct
 {
-	__I u8			rx_fifo_cnt	:8;	// Number of data in uart rx fifo
-	__I u8			dummy8		:5;
+	__I unsigned	rx_fifo_cnt	:8;	// Number of data in uart rx fifo
+	__I unsigned	dummy8		:5;
 	__I unsigned	dsrn		:1;	// The level of uart dsr pin
 	__I unsigned	ctsn		:1;	// The level of uart cts pin
 	__I unsigned	rxd			:1;	// The level of uart rxd pin
-	__I u8			tx_fifo_cnt	:8;	// Number of data in UART TX fifo
-	__I u8			dummy24		:5;
+	__I unsigned	tx_fifo_cnt	:8;	// Number of data in UART TX fifo
+	__I unsigned	dummy24		:5;
 	__I unsigned	dtrn		:1;	// The level of uart dtr pin
 	__I unsigned	rtsn		:1;	// The level of uart rts pin
 	__I unsigned	txd			:1;	// The level of the uart txd pin
@@ -265,8 +265,8 @@ typedef struct
 {
 	__IO unsigned	parity			:1;	// Set parity check:  0:even 1:odd
 	__IO unsigned	parity_en		:1;	// Set this bit to enable uart parity check
-	__IO uart_num_bits_t	num_bits	:2;	// Set bit num:  0:5bits 1:6bits 2:7bits 3:8bits
-	__IO uart_stop_bits_t	stop_bits	:2;	// Set stop bit: 1:1bit  2:1.5bits  3:2bits
+	__IO unsigned	num_bits		:2;	// Set bit num:  0:5bits 1:6bits 2:7bits 3:8bits
+	__IO unsigned	stop_bits		:2;	// Set stop bit: 1:1bit  2:1.5bits  3:2bits
 	__IO unsigned	sw_rts			:1;	// sw rts
 	__IO unsigned	sw_dtr			:1;	// sw dtr
 	__IO unsigned	txd_brk			:1;	// Set this bit to send a tx break signal(need fifo reset first)
@@ -286,125 +286,127 @@ typedef struct
 	__IO unsigned	txd_inv			:1;	// Set this bit to inverse uart txd level
 	__IO unsigned	rts_inv			:1;	// Set this bit to inverse uart rts level
 	__IO unsigned	dyr_inv			:1;	// Set this bit to inverse uart dtr level
-	__IO u8			dummy25			:7;
+	__IO unsigned	dummy25			:7;
 } uart_conf0_t;
 
 typedef struct
 {
-	__IO u8			rx_fifo_full_trhd	:7;	// The config bits for rx fifo full threshold,0-127
+	__IO unsigned	rx_fifo_full_trhd	:7;	// The config bits for rx fifo full threshold,0-127
 	__I unsigned	dummy7				:1;
-	__IO u8			tx_fifi_empty_trhd	:7;	// The config bits for tx fifo empty threshold,0-127
+	__IO unsigned	tx_fifi_empty_trhd	:7;	// The config bits for tx fifo empty threshold,0-127
 	__I unsigned	dummy15				:1;
-	__IO u8			rx_flow_trhd		:7;	// The config bits for rx flow control threshold,0-127
-	__I unsigned	rx_flow_en			:1;	// Set this bit to enable rx hardware flow control
-	__IO u8			rx_tout_trhd		:7;	// Config bits for rx time-out threshold,uint: byte,0-127
+	__IO unsigned	rx_flow_trhd		:7;	// The config bits for rx flow control threshold,0-127
+	__IO unsigned	rx_flow_en			:1;	// Set this bit to enable rx hardware flow control
+	__IO unsigned	rx_tout_trhd		:7;	// Config bits for rx time-out threshold,uint: byte,0-127
 	__IO unsigned	rx_tout_en			:1;	// Set this bit to enable rx time-out function
 } uart_conf1_t;
 
 typedef struct
 {
-	__IO u32		lowpulse_min_cnt	:20;	// used in baudrate detect
-	__I u16			dummy				:12;
+	__IO unsigned	lowpulse_min_cnt	:20;	// used in baudrate detect
+	__I unsigned	dummy20				:12;
 } uart_lowpulse_t;
 
 typedef struct
 {
-	__IO u32		highpulse_min_cnt	:20;	// used in baudrate detect
-	__I u16			dummy				:12;
+	__IO unsigned	highpulse_min_cnt	:20;	// used in baudrate detect
+	__I unsigned	dummy20				:12;
 } uart_highpulse_t;
 
 typedef struct
 {
-	__IO u16		rxd_edge_cnt	:10;	// used in baudrate detect
-	__I u32			dummy			:22;
+	__IO unsigned	rxd_edge_cnt		:10;	// used in baudrate detect
+	__I unsigned	dummy20				:22;
 } uart_pulse_num_t;
+
+
 
 typedef struct UART_struct
 {
-	union
+	union										// 	0x60000?00
 	{
-		__I u32			uart_fifo;
-		__I uart_fifo_t	uart_fifo_bits;
+		__I u32				uart_fifo;
+		__I uart_fifo_t		uart_fifo_bits;
 	};
-	union
+	union										// 	0x60000?04
 	{
 		__I u32				uart_int_raw;
 		__I uart_int_raw_t	uart_int_raw_bits;
 	};
-	union
+	union										// 	0x60000?08
 	{
 		__I u32				uart_int_st;
 		__I uart_int_st_t	uart_int_st_bits;
 	};
-	union
+	union										// 	0x60000?0C
 	{
 		__IO u32			uart_int_ena;
 		__IO uart_int_ena_t	uart_int_ena_bits;
 	};
-	union
+	union										// 	0x60000?10
 	{
 		__O u32				uart_int_clr;
 		__O uart_int_clr_t	uart_int_clr_bits;
 	};
-	union
+	union										// 	0x60000?14
 	{
 		__IO u32			uart_clk_div;
 		__IO uart_clk_div_t	uart_clk_div_bits;
 	};
-	union
+	union										// 	0x60000?18
 	{
 		__IO u32				uart_autobaud;
 		__IO uart_autobaud_t	uart_autobaud_bits;
 	};
-	union
+	union										// 	0x60000?1C
 	{
 		__I u32				uart_status;
 		__I uart_status_t	uart_status_bits;
 	};
-	union
+	union										// 	0x60000?20
 	{
 		__IO u32			uart_conf0;
 		__IO uart_conf0_t	uart_conf0_bits;
 	};
-	union
+	union										//	0x60000?24
 	{
 		__IO u32			uart_conf1;
 		__IO uart_conf1_t	uart_conf1_bits;
 	};
-	union
+	union										// 	0x60000?28
 	{
 		__I u32				uart_lowpulse;
 		__I uart_lowpulse_t	uart_lowpulse_bits;
 	};
-	union
+	union										// 	0x60000?2C
 	{
 		__I u32					uart_highpulse;
 		__I uart_highpulse_t	uart_highpulse_bits;
 	};
-	union
+	union										// 	0x60000?30
 	{
 		__I u32					uart_pulse_num;
 		__I uart_pulse_num_t	uart_pulse_num_bits;
 	};
-	__I u32		dummy34;
-	__I u32		dummy38;
-	__I u32		dummy3C;
-	__I u32		dummy40;
-	__I u32		dummy44;
-	__I u32		dummy48;
-	__I u32		dummy4C;
-	__I u32		dummy50;
-	__I u32		dummy54;
-	__I u32		dummy58;
-	__I u32		dummy5C;
-	__I u32		dummy60;
-	__I u32		dummy64;
-	__I u32		dummy68;
-	__I u32		dummy6C;
-	__I u32		dummy70;
-	__I u32		dummy74;
-	__IO u32	uart_date;	// UART HW INFO
-	__IO u32	uart_id;
+	__I u32		dummy34;	// 	0x60000?34
+	__I u32		dummy38;	// 	0x60000?38
+	__I u32		dummy3C;	// 	0x60000?3C
+	__I u32		dummy40;	// 	0x60000?40
+	__I u32		dummy44;	// 	0x60000?44
+	__I u32		dummy48;	// 	0x60000?48
+	__I u32		dummy4C;	// 	0x60000?4C
+	__I u32		dummy50;	// 	0x60000?50
+	__I u32		dummy54;	// 	0x60000?54
+	__I u32		dummy58;	// 	0x60000?58
+	__I u32		dummy5C;	// 	0x60000?5C
+	__I u32		dummy60;	// 	0x60000?60
+	__I u32		dummy64;	// 	0x60000?64
+	__I u32		dummy68;	// 	0x60000?68
+	__I u32		dummy6C;	// 	0x60000?6C
+	__I u32		dummy70;	// 	0x60000?70
+	__I u32		dummy74;	// 	0x60000?74
+	__IO u32	uart_date;	//	0x60000?78 UART HW INFO
+	__IO u32	uart_id;	// 	0x60000?7C 
 } UART_TypeDef;
 
 #define UART0_BaseAddress		0x60000000
@@ -464,6 +466,7 @@ typedef struct UART_struct
 #define UART_INT_ENA_TXFIFO_EMPTY		((u32)0x00000002)
 #define UART_INT_ENA_RXFIFO_FULL		((u32)0x00000001)
 
+#define UART_INT_CLR_MASK				((u32)0x0000FFFF)
 #define UART_INT_CLR_RXFIFO_TOUT		((u32)0x00000100)
 #define UART_INT_CLR_BRK_DET			((u32)0x00000080)
 #define UART_INT_CLR_CTS_CHG			((u32)0x00000040)

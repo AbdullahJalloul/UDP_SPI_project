@@ -7,9 +7,8 @@
 //#include "freertos/portmacro.h"
 #include	"driver/gpio.h"
 
-#include "../include/driver/gpio_registers.h"
-#include "../include/driver/iomux_registers.h"
-#include "../include/driver/rtc_registers.h"
+#include 	"driver/iomux_registers.h"
+#include 	"driver/rtc_registers.h"
 #include	"eagle_soc.h"
 
 
@@ -175,7 +174,7 @@ uint32 ICACHE_FLASH_ATTR gpio_input_get (void)
  */
 void ICACHE_FLASH_ATTR gpio_intr_handler_register (void *fn)
 {
-	//	_xt_isr_attach (ETS_GPIO_INUM, fn, NULL);
+	_xt_isr_attach (ETS_GPIO_INUM, fn, NULL);
 }
 
 /*
@@ -184,7 +183,7 @@ void ICACHE_FLASH_ATTR gpio_intr_handler_register (void *fn)
 void ICACHE_FLASH_ATTR gpio_pin_wakeup_enable (uint32 i, gpio_pin_int_t intr_state)
 {
 	uint32 pin_reg;
-	__IO GPIO_pin_t *p_pin = &GPIO->pin_0_bits + sizeof(GPIO_pin_t) * i;
+	volatile gpio_pin_t *p_pin = &GPIO->pin_0_bits + sizeof(gpio_pin_t) * i;
 
 	//	if ((intr_state == GPIO_PIN_INTR_LOLEVEL) || (intr_state == GPIO_PIN_INTR_HILEVEL))
 	if ( (intr_state == GPIO_INT_LOW_LEVEL) || (intr_state == GPIO_INT_HIGH_LEVEL))
@@ -204,7 +203,7 @@ void ICACHE_FLASH_ATTR gpio_pin_wakeup_enable (uint32 i, gpio_pin_int_t intr_sta
 void ICACHE_FLASH_ATTR gpio_pin_wakeup_disable (void)
 {
 	uint8 i;
-	__IO GPIO_pin_t *pin_reg_p = &GPIO->pin_0_bits;
+	volatile gpio_pin_t *pin_reg_p = &GPIO->pin_0_bits;
 
 	for (i = 0; i < GPIO_PIN_COUNT; i++)
 	{
@@ -215,17 +214,10 @@ void ICACHE_FLASH_ATTR gpio_pin_wakeup_disable (void)
 
 void ICACHE_FLASH_ATTR gpio_pin_intr_state_set (uint32 i, gpio_pin_int_t intr_state)
 {
-//	uint32 pin_reg;
-
 	//	portENTER_CRITICAL();
-	__IO GPIO_pin_t *p_pin = &GPIO->pin_0_bits + sizeof(GPIO_pin_t) * i;
-	p_pin->pin_int = intr_state;
-	
-/*	pin_reg = GPIO_REG_READ(GPIO_PIN_ADDR(i));
-	pin_reg &= (~GPIO_PIN_INT_TYPE_MASK);
-	pin_reg |= (intr_state << GPIO_PIN_INT_TYPE_LSB);
-	GPIO_REG_WRITE(GPIO_PIN_ADDR(i), pin_reg);
-*/
+	volatile gpio_pin_t	*pin = &GPIO->pin_0_bits + (sizeof (gpio_pin_t) * i);
+	pin->pin_int = intr_state;
+//	pin->.pin_int = intr_state;
 	//	portEXIT_CRITICAL();
 }
 

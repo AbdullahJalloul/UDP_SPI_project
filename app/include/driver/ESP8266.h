@@ -399,7 +399,7 @@ typedef enum {
 #define TIMER1_ALARM	timer_[12] // the alarm value for the counter
 #define TIMER1_ALARM_DATA_MASK	0xffffffff
 /*	Returns	the	current	time	according	to	the	timer	timer. */
-#define	NOW()			TIMER1_COUNT // RTC_REG_READ(FRC2_COUNT_ADDRESS)
+//#define	NOW()			TIMER1_COUNT // RTC_REG_READ(FRC2_COUNT_ADDRESS)
 
 /* WDT:0x60000900 registers */
 /* WDT_CTRL:0x60000900 register */
@@ -474,13 +474,13 @@ typedef enum {
 #define GPIOx_PIN(n)		gpio_[IDX_GPIO_PIN + n]
 #define GPIO_PIN_CONFIG                        0x00000003
 #define GPIO_PIN_CONFIG_S                      11
-#define GPIO_PIN_WAKEUP_ENABLE                 (1<<10)
+//#define GPIO_PIN_WAKEUP_ENABLE                 (1<<10)
 #define GPIO_PIN_WAKEUP_ENABLE_S               10
 #define GPIO_PIN_INT_TYPE                      0x00000007
 #define GPIO_PIN_INT_TYPE_S                    7
-#define GPIO_PIN_DRIVER                        BIT2
+//#define GPIO_PIN_DRIVER                        BIT2
 #define GPIO_PIN_DRIVER_S                      2
-#define GPIO_PIN_SOURCE                        1
+//#define GPIO_PIN_SOURCE                        1
 #define GPIO_PIN_SOURCE_S                      0
 
 //0x60000700

@@ -24,14 +24,14 @@
 
 typedef struct
 {
-	__IO u32	load_value	:23;	// the load value into the counter
-	__I u16		dummy23		:9;
+	__IO unsigned	load_value	:23;	// the load value into the counter
+	__I unsigned	dummy23		:9;
 } timer_frc1_load_t;
 
 typedef struct
 {
-	__I u32		count		:23;	// the current value of the counter. It is a decreasing counter.
-	__I u16		dummy23		:9;
+	__I unsigned	count		:23;	// the current value of the counter. It is a decreasing counter.
+	__I unsigned	dummy23		:9;
 } timer_frc1_count_t;
 
 typedef enum _frc_interrupt_t
@@ -49,61 +49,61 @@ typedef enum _frc_prescaler_t
 
 typedef struct
 {
-	__IO timer_frc_interrupt_t	interrupt_type	:1;	// bit[0]: interrupt type, 0:edge, 1:level
-	__I unsigned				dummy1			:1;
-	__IO timer_frc_prescaler_t	prescaler		:2;	// bit[3:2]: prescale-divider, 0: divided by 1, 1: divided by 16, 2 or 3: divided by 256
-	__I	u8						dummy4			:2;
-	__IO unsigned				reload			:1;	// bit[6]: automatically reload, when the counter  is equal to zero
-	__IO unsigned				enable			:1;	// bit[7]: timer enable
-	__IO unsigned				interrupt		:1;	// the status of the interrupt, when the count is equal to the alarm value
-	__I u32						dummy8			:23;
+	__IO unsigned	interrupt_type	:1;	// bit[0]: interrupt type, 0:edge, 1:level
+	__I unsigned	dummy1			:1;
+	__IO unsigned	prescaler		:2;	// bit[3:2]: prescale-divider, 0: divided by 1, 1: divided by 16, 2 or 3: divided by 256
+	__I	unsigned	dummy4			:2;
+	__IO unsigned	reload			:1;	// bit[6]: automatically reload, when the counter  is equal to zero
+	__IO unsigned	enable			:1;	// bit[7]: timer enable
+	__IO unsigned	interrupt		:1;	// the status of the interrupt, when the count is equal to the alarm value
+	__I unsigned	dummy8			:23;
 } timer_frc_control_t;
 
 typedef struct
 {
 	__IO unsigned	interrupt_clear	:1;	// write to clear the status of the interrupt, if the interrupt type is "level"
-	__I u32			dummy1			:31;
+	__I unsigned	dummy1			:31;
 } timer_frc_int_t;
 
 typedef struct
 {
-	union
+	union										// 0x60000600
 	{
 		__IO u32					frc1_load;		// the load value into the counter
 		__IO timer_frc1_load_t		frc1_load_bits;
 	};
-	union
+	union										// 0x60000604
 	{
 		__I u32						frc1_count;		// the current value of the counter. It is a decreasing counter.
 		__I timer_frc1_count_t		frc1_count_bits;
 	};
-	union
+	union										// 0x60000608
 	{
 		__IO u32					frc1_control;
 		__IO timer_frc_control_t	frc1_control_bits;
 	};
-	union
+	union										// 0x6000060C
 	{
 		__IO u32					frc1_int;
 		__IO timer_frc_int_t		frc1_int_bits;
 	};
-	__I u32		dummy10;
-	__I u32		dummy14;
-	__I u32		dummy18;
-	__I u32		dummy1C;
-	__IO u32						frc2_load;	// the load value into the counter
-	__I u32							frc2_count;	// the current value of the counter. It is a increasing counter.
-	union
+	__I u32		dummy10;						// 0x60000610
+	__I u32		dummy14;						// 0x60000614
+	__I u32		dummy18;						// 0x60000618
+	__I u32		dummy1C;						// 0x6000061C
+	__IO u32						frc2_load;	// 0x60000620 the load value into the counter
+	__I u32							frc2_count;	// 0x60000624 the current value of the counter. It is a increasing counter.
+	union										// 0x60000628
 	{
 		__IO u32					frc2_control;
 		__IO timer_frc_control_t	frc2_control_bits;
 	};
-	union
+	union										// 0x6000062C
 	{
 		__IO u32					frc2_int;
 		__IO timer_frc_int_t		frc2_int_bits;
 	};
-	__IO u32	alarm_value;	// the alarm value for the counter
+	__IO u32	alarm_value;					// 0x60000630 the alarm value for the counter
 } TIMER_typedef;
 
 

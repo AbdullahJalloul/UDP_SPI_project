@@ -18,10 +18,10 @@ FLAVOR = debug
 #EXTRA_CCFLAGS += -u
 
 ifndef PDIR # {
-GEN_IMAGES= eagle.app.v6.out
-GEN_BINS= eagle.app.v6.bin
-SPECIAL_MKTARGETS=$(APP_MKTARGETS)
-SUBDIRS=    \
+GEN_IMAGES = eagle.app.v6.out
+GEN_BINS = eagle.app.v6.bin
+SPECIAL_MKTARGETS = $(APP_MKTARGETS)
+SUBDIRS =    \
 	driver	\
 	user	\
 	lwip
@@ -47,16 +47,16 @@ ifeq ($(FLAVOR),release)
     TARGET_LDFLAGS += -g -O0
 endif
 
-#LD_FILE = $(LDDIR)/eagle.app.v6.ld
-LD_FILE = c:/Espressif/examples/UDP_SPI_project/eagle.app.v6.ld
+#LD_FILE = ld/eagle.app.v6.ld
+LD_FILE = c:/Espressif/examples/UDP_SPI_project/ld/eagle.app.v6.ld
 
-ifeq ($(APP), 1)
-	LD_FILE = $(LDDIR)/eagle.app.v6.app1.ld
-endif
+#ifeq ($(APP), 1)
+#	LD_FILE = $(LDDIR)/eagle.app.v6.app1.ld
+#endif
 
-ifeq ($(APP), 2)
-	LD_FILE = $(LDDIR)/eagle.app.v6.app2.ld
-endif
+#ifeq ($(APP), 2)
+#	LD_FILE = $(LDDIR)/eagle.app.v6.app2.ld
+#endif
 
 COMPONENTS_eagle.app.v6 = \
 	driver/libdriver.a \

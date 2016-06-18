@@ -62,7 +62,8 @@ extern "C" {
  */
 typedef void (* sys_timeout_handler)(void *arg);
 
-struct sys_timeo {
+struct sys_timeo 
+{
   struct sys_timeo *next;
   u32_t time;
   sys_timeout_handler h;

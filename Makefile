@@ -16,8 +16,22 @@ SDK_BASE	?= c:/Espressif/ESP8266_SDK
 
 SDK_TOOLS	?= c:/Espressif/utils
 ESPTOOL		?= $(SDK_TOOLS)/esptool.exe
-ESPPORT		?= COM3
+ESPPORT		?= COM12
 ESPBAUD		?= 256000
+
+WORKDIR		= c:/Espressif/examples/UDP_SPI_project
+
+ADDR_FW1 = 0x00000
+ADDR_FW2 = 0x10000
+# ADDR_FW2 должен быть равен irom0_text start address в eagle.app.v6.ld
+
+OUTBIN1 := $(FW_BASE)/$(ADDR_FW1).bin
+OUTBIN2 := $(FW_BASE)/$(ADDR_FW2).bin
+
+#USERFADDR = 0x3E000
+USERFADDR = $(shell printf '0x%X\n' $$(( ($$(stat --printf="%s"  $(WORKDIR)/$(OUTBIN2)) + 0xFFF + $(ADDR_FW2)) & (0xFFFFF000) )) )
+
+
 
 # SPI_SPEED = 40, 26, 20, 80
 SPI_SPEED ?= 40
@@ -72,35 +86,42 @@ endif
 ifeq ($(SPI_SIZE_MAP), 1)
   size_map = 1
   flash = 256
+  FLASH_SIZE = 0x00040000
   flashimageoptions += -fs 2m
 else
   ifeq ($(SPI_SIZE_MAP), 2)
     size_map = 2
     flash = 1024
+    FLASH_SIZE = 0x00100000
     flashimageoptions += -fs 8m
   else
     ifeq ($(SPI_SIZE_MAP), 3)
       size_map = 3
       flash = 2048
+      FLASH_SIZE = 0x00200000
       flashimageoptions += -fs 16m
     else
       ifeq ($(SPI_SIZE_MAP), 4)
 		size_map = 4
 		flash = 4096
+		FLASH_SIZE = 0x00400000
 		flashimageoptions += -fs 32m
       else
         ifeq ($(SPI_SIZE_MAP), 5)
           size_map = 5
           flash = 2048
+          FLASH_SIZE = 0x00200000
           flashimageoptions += -fs 16m
         else
           ifeq ($(SPI_SIZE_MAP), 6)
             size_map = 6
             flash = 4096
+            FLASH_SIZE = 0x00400000
             flashimageoptions += -fs 32m
           else
             size_map = 0
             flash = 512
+            FLASH_SIZE = 0x00080000
             flashimageoptions += -fs 4m
           endif
         endif
@@ -108,6 +129,8 @@ else
     endif
   endif
 endif
+
+USERFSIZE = $(shell printf '0x%X\n' $$(($(FLASH_SIZE) - $(USERFADDR) - (0x00001000) )) )
 
 # select which tools to use as compiler, librarian and linker
 CC := $(XTENSA_TOOLS_ROOT)/xtensa-lx106-elf-gcc
@@ -122,7 +145,9 @@ CCFLAGS += -Os -std=gnu90 -ffunction-sections -fno-jump-tables -fdata-sections
 CSRCS ?= $(wildcard *.c)
 ASRCs ?= $(wildcard *.s)
 ASRCS ?= $(wildcard *.S)
+
 SUBDIRS ?= $(patsubst %/,%,$(dir $(wildcard */Makefile)))
+#SUBDIRS ?= /driver /user /lwip
 
 ODIR := .output
 OBJODIR := $(ODIR)/$(TARGET)/$(FLAVOR)/obj
@@ -143,6 +168,7 @@ OIMAGES := $(GEN_IMAGES:%=$(IMAGEODIR)/%)
 
 BINODIR := $(ODIR)/$(TARGET)/$(FLAVOR)/bin
 OBINS := $(GEN_BINS:%=$(BINODIR)/%)
+
 
 V ?= $(VERBOSE)
 ifeq ("$(V)","1")
@@ -203,9 +229,11 @@ $(BINODIR)/%.bin: $(IMAGEODIR)/%.out
 	$(vecho) "------------------------------------------------------------------------------"
 	$(Q) $(ESPTOOL) elf2image $< -o../$(FW_BASE)/ $(flashimageoptions)
 	$(vecho) "------------------------------------------------------------------------------"
-	$(vecho) "Generate 0x00000.bin and 0x40000.bin successully in folder $(FW_BASE)."
-	$(vecho) "0x00000.bin-------->0x00000"
-	$(vecho) "0x40000.bin-------->0x40000"
+	$(vecho) "Generate $(ADDR_FW1).bin and $(ADDR_FW2).bin successully in folder $(FW_BASE)."
+	$(vecho) "$(OUTBIN1)-------->$(ADDR_FW1)"
+	$(vecho) "$(OUTBIN2)-------->$(ADDR_FW2)"
+	$(vecho) "Calculate min org for irom0_0_seg = $(USERFADDR)"
+	$(vecho) "Calculate max len for irom0_0_seg = $(USERFSIZE)"
 	$(vecho) "Done"
 
 .PHONY: .subdirs all clean clobber progr flash flashinit rebuild
@@ -228,11 +256,8 @@ flash:
 	$(foreach d, $(SUBDIRS), $(MAKE) -C $(d) progr;)
 
 progr: all
-ifndef PDIR
-	$(MAKE) -C ./app flash
-else
-	$(ESPTOOL) -p $(ESPPORT) -b $(ESPBAUD) write_flash $(flashimageoptions) 0x00000 ../$(FW_BASE)/0x00000.bin 0x40000 ../$(FW_BASE)/0x40000.bin
-endif
+#	$(ESPTOOL) -p $(ESPPORT) -b $(ESPBAUD) write_flash $(flashimageoptions) 0x00000 ../$(FW_BASE)/0x00000.bin 0x40000 ../$(FW_BASE)/0x40000.bin
+	$(ESPTOOL) -p $(ESPPORT) -b $(ESPBAUD) write_flash $(flashimageoptions) $(ADDR_FW1) $(WORKDIR)/$(OUTBIN1) $(ADDR_FW2) $(WORKDIR)/$(OUTBIN2)
 
 # ===============================================================
 # From http://bbs.espressif.com/viewtopic.php?f=10&t=305

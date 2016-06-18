@@ -3,7 +3,7 @@
  * Define user specified Event signals and Task priorities here
  *
  */
-	
+
 #ifndef _ETS_SYS_H
 #define _ETS_SYS_H
 
@@ -15,23 +15,25 @@ typedef uint32_t ETSParam;
 
 typedef struct ETSEventTag ETSEvent;
 
-struct ETSEventTag {
-    ETSSignal sig;
-    ETSParam  par;
+struct ETSEventTag
+{
+	ETSSignal sig;
+	ETSParam par;
 };
 
-typedef void (*ETSTask)(ETSEvent *e);
+typedef void (*ETSTask) (ETSEvent *e);
 
 /* timer related */
 typedef uint32_t ETSHandle;
-typedef void ETSTimerFunc(void *timer_arg);
+typedef void ETSTimerFunc (void *timer_arg);
 
-typedef struct _ETSTIMER_ {
-    struct _ETSTIMER_    *timer_next;
-    uint32_t              timer_expire;
-    uint32_t              timer_period;
-    ETSTimerFunc         *timer_func;
-    void                 *timer_arg;
+typedef struct _ETSTIMER_
+{
+	struct _ETSTIMER_ *timer_next;
+	uint32_t timer_expire;
+	uint32_t timer_period;
+	ETSTimerFunc *timer_func;
+	void *timer_arg;
 } ETSTimer;
 
 /* interrupt related */

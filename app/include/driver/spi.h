@@ -10,8 +10,8 @@
 
 #define SPI_SLAVE_DEBUG
 //SPI protocol selection
-#define TWO_INTR_LINE_PROTOCOL 		0
-#define ONE_INTR_LINE_WITH_STATUS 	1
+#define TWO_INTR_LINE_PROTOCOL 		1
+#define ONE_INTR_LINE_WITH_STATUS 	0
 
 struct spi_slave_status_element
 {
@@ -35,52 +35,39 @@ union spi_slave_status
 #define SPI 			0
 #define HSPI			1
 
-void cache_flush (
-    void);
+void cache_flush (void);
 //spi master init funtion
-void spi_master_init (
-    void);
+void spi_master_init (void);
 
 //lcd drive function
-void spi_lcd_9bit_write (
-    uint8 high_bit, uint8 low_8bit);
+void spi_lcd_9bit_write (uint8 high_bit, uint8 low_8bit);
 //use spi send 8bit data
-void spi_mast_byte_write (
-    uint8 data);
+void spi_mast_byte_write (uint8 data);
 
 //transmit data to esp8266 slave buffer,which needs 16bit transmission ,
 //first byte is master command 0x04, second byte is master data
-void spi_byte_write_espslave (
-    uint8 data);
+void spi_byte_write_espslave (uint8 data);
 //read data from esp8266 slave buffer,which needs 16bit transmission ,
 //first byte is master command 0x06, second byte is to read slave data
-void spi_byte_read_espslave (
-    uint8 *data);
+void spi_byte_read_espslave (uint8 *data);
 
 //esp8266 slave mode initial
-void spi_slave_init (
-    void);
+void spi_slave_init (void);
 //esp8266 slave isr handle funtion,tiggered when any transmission is finished.
 
 // 2line interrupt slave protocal
-void spi_slave_isr_handler (
-    void *para);
+void spi_slave_isr_handler (void *para);
 // 1line interrupt with status register slave protocal
-void spi_slave_isr_sta (
-    void *para);
+void spi_slave_isr_sta (void *para);
 
 //hspi test function, used to test esp8266 spi slave
-void hspi_master_readwrite_repeat (
-    void);
+void hspi_master_readwrite_repeat (void);
 
-void spi_test_init (
-    void);
+void spi_test_init (void);
 
-void spi_WR_espslave (
-    void);
+void spi_WR_espslave (void);
 
-void set_data (
-    void);
+void set_data (void);
 
 #endif
 
