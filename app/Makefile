@@ -48,7 +48,8 @@ ifeq ($(FLAVOR),release)
 endif
 
 #LD_FILE = ld/eagle.app.v6.ld
-LD_FILE = c:/Espressif/examples/UDP_SPI_project/ld/eagle.app.v6.ld
+#LD_FILE = $(LDDIR)/eagle.app.v6.ld
+LD_FILE = c:/Espressif/examples/ESP8266/UDP_SPI_project/ld/eagle.app.v6.ld
 
 #ifeq ($(APP), 1)
 #	LD_FILE = $(LDDIR)/eagle.app.v6.app1.ld
@@ -77,17 +78,20 @@ LINKFLAGS_eagle.app.v6 = \
 	-lphy	\
 	-lpp	\
 	-lat	\
-	-lpwm	\
-	-lsmartconfig	\
-	-lupgrade	\
 	-lnet80211	\
-	-lcrypto	\
-	-lssl	\
 	-lwpa	\
 	-lmain	\
 	-ljson	\
+	-lupgrade\
+	-lssl	\
+	-lpwm	\
+	-lsmartconfig \
+	-llwip	\
+	-lcrypto \
 	$(DEP_LIBS_eagle.app.v6)					\
 	-Wl,--end-group
+#	-lwps	\
+#	-lairkiss	\
 
 
 

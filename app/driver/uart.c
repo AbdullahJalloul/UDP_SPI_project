@@ -9,11 +9,13 @@
  * Modification history:
  *     2014/3/12, v1.0 create this file.
  *******************************************************************************/
-#include "c_types.h"
-#include "ets_sys.h"
-#include "osapi.h"
-#include "driver/uart.h"
-#include "driver/iomux_registers.h"
+#include	"c_types.h"
+#include	"ets_sys.h"
+#include	"osapi.h"
+#include	"bits.h"
+#include	"ESP8266_registers.h"
+//#include	"uart_register.h"
+#include	"driver/uart.h"
 
 #define UART0   0
 #define UART1   1
@@ -57,35 +59,35 @@ static void ICACHE_FLASH_ATTR uart_config (uint8 uart_no)
 	
 	uart_div_modify (uart_no, UART_CLK_FREQ / (UartDev.baut_rate));
 	
-	uart_p->uart_conf0 = (UartDev.exist_parity
+	uart_p->conf0 = (UartDev.exist_parity
 	        | UartDev.parity
-	        | (UartDev.stop_bits << UART_STOP_BIT_NUM_S)
-	        | (UartDev.data_bits << UART_BIT_NUM_S));
+	        | (UartDev.stop_bits << 4)	//UART_STOP_BIT_NUM_S)
+	        | (UartDev.data_bits << 2));	//UART_BIT_NUM_S));
 	
 	//clear rx and tx fifo,not ready
-	uart_p->uart_conf0 |= UART_CONF0_RXFIFO_RST | UART_CONF0_TXFIFO_RST;	
-	uart_p->uart_conf0 &= ~(UART_CONF0_RXFIFO_RST | UART_CONF0_TXFIFO_RST);	
+	uart_p->conf0 |= UART_CONF0_RXFIFO_RST | UART_CONF0_TXFIFO_RST;	
+	uart_p->conf0 &= ~(UART_CONF0_RXFIFO_RST | UART_CONF0_TXFIFO_RST);	
 	
 	if (uart_no == UART0)
 	{
 		//set rx fifo trigger
-		uart_p->uart_conf1_bits.rx_fifo_full_trhd = 0x10;
-		uart_p->uart_conf1_bits.rx_flow_trhd = 0x10;
-		uart_p->uart_conf1_bits.rx_flow_en = 1;
-		uart_p->uart_conf1_bits.rx_tout_trhd = 0x02;
-		uart_p->uart_conf1_bits.rx_tout_en = 1;
+		uart_p->conf1_bits.rx_fifo_full_trhd = 0x10;
+		uart_p->conf1_bits.rx_flow_trhd = 0x10;
+		uart_p->conf1_bits.rx_flow_en = 1;
+		uart_p->conf1_bits.rx_tout_trhd = 0x02;
+		uart_p->conf1_bits.rx_tout_en = 1;
 		
-		uart_p->uart_int_ena |= UART_INT_ENA_RXFIFO_TOUT | UART_INT_ENA_FRM_ERR;
+		uart_p->int_ena |= UART_INT_ENA_RXFIFO_TOUT | UART_INT_ENA_FRM_ERR;
 	}
 	else
 	{
-		uart_p->uart_conf1_bits.rx_fifo_full_trhd = UartDev.rcv_buff.TrigLvl;
+		uart_p->conf1_bits.rx_fifo_full_trhd = UartDev.rcv_buff.TrigLvl;
 	}
 	
 	//clear all interrupt
-	uart_p->uart_int_clr = UART_INT_CLR_MASK;
+	uart_p->int_clr = UART_INT_CLR_MASK;
 	//enable rx_interrupt
-	uart_p->uart_int_ena_bits.rx_fifo_full = 1;
+	uart_p->int_ena_bits.rx_fifo_full = 1;
 }
 
 /******************************************************************************
@@ -97,17 +99,9 @@ static void ICACHE_FLASH_ATTR uart_config (uint8 uart_no)
  *******************************************************************************/
 static STATUS ICACHE_FLASH_ATTR uart1_tx_one_char (uint8 TxChar)
 {
-	while (true)
-	{
-		uint32 fifo_cnt = READ_PERI_REG(UART_STATUS(UART1))
-		        & (UART_TXFIFO_CNT << UART_TXFIFO_CNT_S);
-		if ( (fifo_cnt >> UART_TXFIFO_CNT_S & UART_TXFIFO_CNT) < 126)
-		{
-			break;
-		}
-	}
+	while (UART_1->status_bits.tx_fifo_cnt < 126);
 
-	WRITE_PERI_REG(UART_FIFO(UART1), TxChar);
+	UART_1->fifo = TxChar;
 	return OK;
 }
 
@@ -122,14 +116,13 @@ STATUS uart0_tx_one_char (uint8 TxChar)
 {
 	while (true)
 	{
-		uint32 fifo_cnt = READ_PERI_REG(UART_STATUS (UART0))
-		        & (UART_TXFIFO_CNT << UART_TXFIFO_CNT_S);
-		if ( (fifo_cnt >> UART_TXFIFO_CNT_S & UART_TXFIFO_CNT) < 126)
+		uint32 fifo_cnt = UART_0->status_bits.tx_fifo_cnt; 
+		if (fifo_cnt < 126)
 		{
 			break;
 		}
 	}
-	WRITE_PERI_REG(UART_FIFO (UART0), TxChar);
+	UART_0->fifo = TxChar;
 	return OK;
 }
 
@@ -189,18 +182,18 @@ static void uart0_rx_intr_handler (void *para)
 	RcvMsgBuff *pRxBuff = (RcvMsgBuff *)para;
 	uint8 RcvChar;
 
-	if (UART_RXFIFO_FULL_INT_ST
-	        != (READ_PERI_REG (UART_INT_ST (UART0)) & UART_RXFIFO_FULL_INT_ST))
+	if (UART_0->int_st_bits.rx_fifo_full == 0)
 	{
 		return;
 	}
 
-	WRITE_PERI_REG(UART_INT_CLR (UART0), UART_RXFIFO_FULL_INT_CLR);
+	UART_0->int_clr_bits.rx_fifo_full = 1;
+//	WRITE_PERI_REG(UART_INT_CLR (UART0), UART_RXFIFO_FULL_INT_CLR);
 
-	while (READ_PERI_REG (UART_STATUS (UART0))
-	        & (UART_RXFIFO_CNT << UART_RXFIFO_CNT_S))
+	while (UART_0->status_bits.rx_fifo_cnt)
 	{
-		RcvChar = READ_PERI_REG (UART_FIFO (UART0)) & 0xFF;
+		RcvChar = (u8)UART_0->fifo;
+//		READ_PERI_REG (UART_FIFO (UART0)) & 0xFF;
 
 		/* you can add your handle code below.*/
 
@@ -257,5 +250,30 @@ void ICACHE_FLASH_ATTR uart_init (UartBautRate uart0_br, UartBautRate uart1_br)
 
 	// install uart1 putc callback
 	os_install_putc1 ((void *)uart1_write_char);
+}
+
+
+//=============================================================================
+// uart_wait_tx_fifo_empty()
+//-----------------------------------------------------------------------------
+void ICACHE_FLASH_ATTR uart_wait_tx_fifo_empty (void)
+{
+	while (UART_0->status_bits.tx_fifo_cnt);
+	while (UART_1->status_bits.tx_fifo_cnt);
+}
+//=============================================================================
+// user_uart_wait_tx_fifo_empty()
+// Use SDK Espressif
+//-----------------------------------------------------------------------------
+void ICACHE_FLASH_ATTR user_uart_wait_tx_fifo_empty(uint32 uart_num, uint32 x)
+{
+	if (uart_num)
+	{
+		while (UART_1->status_bits.tx_fifo_cnt);
+	}
+	else 
+	{
+		while (UART_0->status_bits.tx_fifo_cnt && (x--));
+	}
 }
 

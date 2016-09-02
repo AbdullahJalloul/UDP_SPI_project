@@ -15,5 +15,6 @@ void	spi_byte_write		(u8 byte);
 //void	spi_massive_write	(u32 *buf);
 //void	spi_massive_read	(u32 *buf);
 void	set_udata			(void);
+void	user_udp_receive_cb	(void *arg, char *pdata, unsigned short len);
 
 #endif /* _USER_SPI_H_ */

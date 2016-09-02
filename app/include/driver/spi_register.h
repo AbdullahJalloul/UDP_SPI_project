@@ -8,6 +8,7 @@
 
 #define REG_SPI_BASE(i)  (0x60000200-i*0x100)
 #define SPI_CMD(i)                            (REG_SPI_BASE(i)  + 0x0)
+
 #define SPI_FLASH_READ                          BIT31
 #define SPI_FLASH_WREN                         BIT30
 #define SPI_FLASH_WRDI                         BIT29
@@ -112,6 +113,7 @@
 
 #define SPI_WR_STATUS(i)                          (REG_SPI_BASE(i)  + 0x28)
 #define SPI_PIN(i)                            (REG_SPI_BASE(i)  + 0x2C)
+#define SPI_IDLE_EDGE (BIT(29))
 #define SPI_CS2_DIS (BIT(2))
 #define SPI_CS1_DIS (BIT(1))
 #define SPI_CS0_DIS (BIT(0))

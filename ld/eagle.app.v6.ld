@@ -2,10 +2,10 @@
 /* Linker Script for ld -N */
 MEMORY
 {
-  dport0_0_seg :                        org = 0x3FF00000, len = 0x10
+  dport0_0_seg :                        org = 0x3FF00000, len = 0x100
   dram0_0_seg :                         org = 0x3FFE8000, len = 0x14000
   iram1_0_seg :                         org = 0x40100000, len = 0x8000
-  irom0_0_seg :                         org = 0x40210000, len = 0xB0000
+  irom0_0_seg :                         org = 0x40210000, len = 0xBC000
 }
 
 PHDRS
@@ -203,6 +203,10 @@ SECTIONS
   {
     _irom0_text_start = ABSOLUTE(.);
     *(.irom0.literal .irom.literal .irom.text.literal .irom0.text .irom.text)
+    libwps.a
+	liblwip.a
+	libat.a
+	libairkiss.a
     _irom0_text_end = ABSOLUTE(.);
   } >irom0_0_seg :irom0_0_phdr
 }

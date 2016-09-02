@@ -1,5 +1,7 @@
 PROVIDE ( Cache_Read_Disable = 0x400047f0 );
 PROVIDE ( Cache_Read_Enable = 0x40004678 );
+PROVIDE ( Enable_QMode = 0x400044c0 );
+PROVIDE ( Disable_QMode = 0x40004508 );
 PROVIDE ( FilePacketSendReqMsgProc = 0x400035a0 );
 PROVIDE ( FlashDwnLdParamCfgMsgProc = 0x4000368c );
 PROVIDE ( FlashDwnLdStartMsgProc = 0x40003538 );

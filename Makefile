@@ -14,22 +14,23 @@ XTENSA_TOOLS_ROOT ?= c:/Espressif/xtensa-lx106-elf/bin
 # base directory of the ESP8266 SDK package, absolute
 SDK_BASE	?= c:/Espressif/ESP8266_SDK
 
-SDK_TOOLS	?= c:/Espressif/utils
+SDK_TOOLS	?= c:/Espressif/utils/ESP8266
 ESPTOOL		?= $(SDK_TOOLS)/esptool.exe
 ESPPORT		?= COM12
 ESPBAUD		?= 256000
 
-WORKDIR		= c:/Espressif/examples/UDP_SPI_project
+WORKDIR		= c:/Espressif/examples/ESP8266/UDP_SPI_project
 
 ADDR_FW1 = 0x00000
 ADDR_FW2 = 0x10000
-# ADDR_FW2 должен быть равен irom0_text start address в eagle.app.v6.ld
+# ADDR_FW2 должен быть равен (irom0_0_seg.org - 0x40200000) в eagle.app.v6.ld
 
 OUTBIN1 := $(FW_BASE)/$(ADDR_FW1).bin
 OUTBIN2 := $(FW_BASE)/$(ADDR_FW2).bin
 
 #USERFADDR = 0x3E000
-USERFADDR = $(shell printf '0x%X\n' $$(( ($$(stat --printf="%s"  $(WORKDIR)/$(OUTBIN2)) + 0xFFF + $(ADDR_FW2)) & (0xFFFFF000) )) )
+#USERFADDR = $(shell printf '0x%X\n' $$(( ($$(stat --printf="%s" $(WORKDIR)/$(OUTBIN2)) + 0xFFF + $(ADDR_FW2)) & (0xFFFFF000) )) )
+USERFADDR = $(shell printf '0x%X\n' $$(( ($$(stat --printf="%s" $(WORKDIR)/$(OUTBIN1)) + 0xFFF + $(ADDR_FW1)) & (0xFFFFF000) )) )
 
 
 

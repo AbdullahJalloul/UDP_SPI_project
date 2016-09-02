@@ -5,11 +5,11 @@
 
 //#include "espressif/esp_common.h"
 //#include "freertos/portmacro.h"
-#include	"driver/gpio.h"
-
-#include 	"driver/iomux_registers.h"
-#include 	"driver/rtc_registers.h"
-#include	"eagle_soc.h"
+#include	<ESP8266_registers.h>
+#include	<gpio.h>
+#include	<eagle_soc.h>
+#include	<ets_sys.h>
+#include	"driver/gpio_func.h"
 
 
 /*void ICACHE_FLASH_ATTR gpio_config1 (gpio_config_t *config)
@@ -104,8 +104,8 @@ void ICACHE_FLASH_ATTR gpio_config (GPIO_ConfigTypeDef *pGPIOConfig)
 				//				portENTER_CRITICAL();
 
 				pin_reg = GPIO_REG_READ(GPIO_PIN_ADDR(io_num));
-				pin_reg &= (~GPIO_PIN_DRIVER_MASK);
-				pin_reg |= (GPIO_PAD_DRIVER_ENABLE << GPIO_PIN_DRIVER_LSB);
+//				pin_reg &= (~GPIO_PIN_DRIVER);
+				pin_reg |= (GPIO_PIN_DRIVER);
 				GPIO_REG_WRITE(GPIO_PIN_ADDR(io_num), pin_reg);
 
 				//				portEXIT_CRITICAL();
@@ -118,7 +118,8 @@ void ICACHE_FLASH_ATTR gpio_config (GPIO_ConfigTypeDef *pGPIOConfig)
 				pin_reg &= (~GPIO_OUT_DATA_MASK);
 				pin_reg |= (0x1 << GPIO_PIN_SOURCE_LSB);
 				GPIO_REG_WRITE(GPIO_PIN_ADDR(io_num), pin_reg);
-				GPIO_REG_WRITE(GPIO_SIGMA_DELTA_ADDRESS, SIGMA_DELTA_ENABLE);
+				GPIO->sigma_delta_bits.enable = 1;
+//				GPIO_REG_WRITE(GPIO_SIGMA_DELTA_ADDRESS, SIGMA_DELTA_ENABLE);
 
 				//				portEXIT_CRITICAL();
 			}

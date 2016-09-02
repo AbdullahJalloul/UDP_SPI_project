@@ -341,8 +341,7 @@ dhcp_select(struct netif *netif)
 /**
  * The DHCP timer that checks for lease renewal/rebind timeouts.
  */
-void ICACHE_FLASH_ATTR
-dhcp_coarse_tmr()
+void ICACHE_FLASH_ATTR dhcp_coarse_tmr()
 {
   struct netif *netif = netif_list;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_coarse_tmr()\n"));
@@ -1096,12 +1095,12 @@ dhcp_renew(struct netif *netif)
     }
 #endif /* LWIP_NETIF_HOSTNAME */
 
-#if 0
+#if 1
     dhcp_option(dhcp, DHCP_OPTION_REQUESTED_IP, 4);
     dhcp_option_long(dhcp, ntohl(dhcp->offered_ip_addr.addr));
 #endif
 
-#if 0
+#if 1
     dhcp_option(dhcp, DHCP_OPTION_SERVER_ID, 4);
     dhcp_option_long(dhcp, ntohl(dhcp->server_ip_addr.addr));
 #endif
@@ -1159,7 +1158,7 @@ dhcp_rebind(struct netif *netif)
     }
 #endif /* LWIP_NETIF_HOSTNAME */
 
-#if 0
+#if 1
     dhcp_option(dhcp, DHCP_OPTION_REQUESTED_IP, 4);
     dhcp_option_long(dhcp, ntohl(dhcp->offered_ip_addr.addr));
 

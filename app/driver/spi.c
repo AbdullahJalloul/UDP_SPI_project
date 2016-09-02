@@ -1,12 +1,14 @@
-#include 	"c_types.h"
+
+
+//#include 	"c_types.h"
+#include	<gpio.h>
+#include	<os_type.h>
+#include	<ESP8266_registers.h>
+#include 	<user_interface.h>
+//#include	"spi_register.h"
 #include 	"driver/spi.h"
-#include 	"driver/gpio.h"
-#include 	"driver/dport_registers.h"
-#include 	"driver/iomux_registers.h"
-#include	"driver/dport_registers.h"
-#include 	"user_interface.h"
-#include 	"mem.h"
-#include	"eagle_soc.h"
+//#include 	"mem.h"
+//#include	"driver/gpio_func.h"
 
 #define CACHE_FLASH_CTRL_REG 0x3ff0000C
 #define CACHE_FLUSH_START_BIT BIT0
@@ -36,7 +38,7 @@ void cache_flush (void)
  *******************************************************************************/
 void ICACHE_FLASH_ATTR spi_master_init (void)
 {
-	//	uint32 regvalue;
+		//uint32 regvalue;
 #define SPI_PREDIV1_CLK		(0)	// ������������ SPI
 #define SPI_DIV1_CLK_N		(3)	// �������� SPI �� �������� ��c���� F = 80��� / (SPI_DIV_CLK_N + 1) = 20MHz
 #define SPI_DIV1_CLK_H		((SPI_DIV_CLK_N + 1) / 2 - 1)	// ��� ������� ���
@@ -186,8 +188,13 @@ void ICACHE_FLASH_ATTR spi_WR_espslave (void)
 	while (SPI1->cmd_bits.usr)
 		;	//waiting for spi module available
 
-	SPI1->user |= (SPI_USR_MOSI | SPI_USR_DOUTDIN);
-	SPI1->user &= ~ (SPI_USR_COMMAND | SPI_USR_ADDR | SPI_USR_DUMMY);
+//	SPI1->user |= (SPI_USR_MOSI | SPI_USR_DOUTDIN);
+//	SPI1->user &= ~ (SPI_USR_COMMAND | SPI_USR_ADDR | SPI_USR_DUMMY);
+	SPI1->user_bits.mosi = 1;
+	SPI1->user_bits.dout_din = 1;
+	SPI1->user_bits.command = 0;
+	SPI1->user_bits.addr = 0;
+	SPI1->user_bits.dummy = 0;
 
 	//in register SPI_FLASH_USER1, bit 17-25 stores MOSI bit length value
 	//The value shall be (bit_num-1).
@@ -700,7 +707,7 @@ void ICACHE_FLASH_ATTR spi_test_init (void)
 /*******************************************************************************
  * передает команду, потом читает read_length
  * только запуск операции, прием данных в обработчике прерываний
- *******************************************************************************/
+ ******************************************************************************/
 void hspi_cr_start (const uint8_t cmd, const uint8_t read_length)
 {
 

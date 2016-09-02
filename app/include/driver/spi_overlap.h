@@ -3,9 +3,10 @@
 
 #include "ets_sys.h"
 #include "spi_flash.h"
+
 #define HSPI_OVERLAP
 //#define NO_HSPI_DEVICE
-#define HOST_INF_SEL 0x3ff00028 
+//#define HOST_INF_SEL 0x3ff00028 //DPORT->peri_io
 #define FUNC_SPI_CS2 1
 #define FUNC_SPI_CS1 1
 #define reg_cspi_overlap  (BIT7)

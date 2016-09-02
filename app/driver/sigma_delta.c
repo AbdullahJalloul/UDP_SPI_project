@@ -14,10 +14,10 @@ YOU CAN DO THE TEST LIKE THIS:
 3. DEINIT AND DISABLE: sigma_delta_close(uint32 GPIO_NUM), eg.sigma_delta_close(2)
 *******************************************************************************/
 
-#include "c_types.h"
-#include "driver/esp8266.h"
-#include "driver/gpio_registers.h"
-#include "gpio.h"
+#include	<c_types.h>
+#include	<ESP8266_registers.h>
+#include	<gpio.h>
+
 
 /******************************************************************************
  * FunctionName : sigma_delta_setup

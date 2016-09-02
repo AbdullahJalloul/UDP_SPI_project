@@ -141,12 +141,6 @@ extern const ip_addr_t ip_addr_broadcast;
                          ((u32_t)((b) & 0xff) << 16) | \
                          ((u32_t)((c) & 0xff) << 8)  | \
                           (u32_t)((d) & 0xff)
-#define IP4_WORD(a,b,c,d) \
-						(((uint32)((a) & 0xff) << 24) | \
-						((uint32)((b) & 0xff) << 16) | \
-						((uint32)((c) & 0xff) << 8)  | \
-						(uint32)((d) & 0xff))
-
 #else
 /** Set an IP address given by the four byte-parts.
     Little-endian version that prevents the use of htonl. */
@@ -155,12 +149,6 @@ extern const ip_addr_t ip_addr_broadcast;
                          ((u32_t)((c) & 0xff) << 16) | \
                          ((u32_t)((b) & 0xff) << 8)  | \
                           (u32_t)((a) & 0xff)
-#define IP4_WORD(a,b,c,d) \
-						(((uint32)((d) & 0xff) << 24) | \
-						((uint32)((c) & 0xff) << 16) | \
-						((uint32)((b) & 0xff) << 8)  | \
-						(uint32)((a) & 0xff))
-
 #endif
 
 /** MEMCPY-like copying of IP addresses where addresses are known to be
