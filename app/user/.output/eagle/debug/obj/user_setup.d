@@ -30,8 +30,11 @@
  c:\espressif\xtensa-lx106-elf\xtensa-lx106-elf\include\sys\cdefs.h \
  c:\espressif\xtensa-lx106-elf\xtensa-lx106-elf\include\sys\string.h \
  ../include/lwip/def.h c:/Espressif/ESP8266_SDK/include/queue.h \
- ../include/global.h ../include/lwip/ip_addr.h \
+ ../include/global.h ../include/lwip/ip_addr.h ../include/lwip/udp.h \
+ ../include/lwip/pbuf.h ../include/lwip/err.h ../include/lwip/netif.h \
+ ../include/lwip/ip.h ../include/lwip/err.h ../include/at.h \
+ ../include/user_setup.h ../include/user_spi.h ../include/lwip/pbuf.h \
+ ../include/ets.h \
+ c:\espressif\xtensa-lx106-elf\lib\gcc\xtensa-lx106-elf\5.2.0\include\stdarg.h \
  ../include/lwip/app/espconn.h ../include/lwip/dns.h \
- ../include/lwip/err.h ../include/lwip/app/espconn_buf.h \
- ../include/lwip/err.h ../include/at.h ../include/user_setup.h \
- ../include/user_spi.h ../include/lwip/app/espconn.h
+ ../include/lwip/app/espconn_buf.h

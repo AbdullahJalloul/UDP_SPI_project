@@ -83,7 +83,7 @@ bool ICACHE_FLASH_ATTR read_setup_flash (void)
 		g.wifi_ch = (u8)data.wifi_channel;
 		g.group_no = (u8)data.group_no;
 		g.channel_no = (u8)data.channel_no;
-		ets_uart_printf ("read user data at address %x\n", user_record);
+		ets_uart_printf ("\nRead user data at address %x\n", user_record);
 	}
 	else	// есть ошибки - заполняем дефолтными значениями
 	{

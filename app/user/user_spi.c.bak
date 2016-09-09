@@ -13,27 +13,26 @@
 #include	"global.h"
 #include	"user_spi.h"
 
-#define		USER_QUEUES		3
 
 //static void	gpio5_setup			(void);
 //static void	pin_int_handler		(void *para);
 static void	spi_int_handler		(void *para);
 void		print_udata			(u8 *buf, u32 len);
-void		read_udata			(u8 index);
+void		write_udata			(void);
+void		read_udata			(void);
 void		print_spi_reg		(void);
-//void		spi_reg_mod			(void);
+void		spi_reg_mod			(void);
 void		read_udp_buf		(u32 *buf);
 
 u8			tcp_compare			(u8 *x, u8 *y);
 u8			port_compare		(int x, int y);
 u8			len_compare			(unsigned short len);
-u8			index_compare		(u32 index);
 
 void		task_user			(os_event_t *e);
 
 
 
-ETSEvent task_user_queue[USER_QUEUES] __attribute__((aligned(4), section(".iram.data")));
+ETSEvent task_user_queue[3] __attribute__((aligned(4), section(".iram.data")));
 
 
 /*******************************************************************************
@@ -126,11 +125,14 @@ void ICACHE_FLASH_ATTR spi_init (void)
 
 	SPI1->ctrl2_bits.mosi_delay_mode = 1;
 	SPI1->ctrl2_bits.miso_delay_mode = 0;
-
+	
+	g.need_transmit = 0;	// сбросим флаг для ошибки #1
+	g.spi_transmit_mode = 0;	// приём
+//	gpio5_setup ();
 	set_udata ();	// тестовые данные
 
 	// задача для отправки данных по UDP
-	ets_task (task_user, USER_TASK_PRIO_1, task_user_queue, USER_QUEUES);	// + SDK_TASK_PRIO
+	ets_task (task_user, USER_TASK_PRIO_1 + SDK_TASK_PRIO, task_user_queue, 3);
 }
 
 /*******************************************************************************
@@ -141,9 +143,9 @@ void ICACHE_FLASH_ATTR task_user (os_event_t *e)
 	switch (e->sig)
 	{
 	case USER_UDP_SEND:
-		user_tx ();
+		wdrv_tx (e->par);
 		break;
-/*	case USER_UDP_INIT:
+	case USER_UDP_INIT:
 		wdrv_init (e->par);
 		break;
 	case USER_UDP_STOP:
@@ -152,13 +154,8 @@ void ICACHE_FLASH_ATTR task_user (os_event_t *e)
 	case USER_UDP_START:
 		wdrv_start (e->par);
 		break;
-*/
-	default:
-		break;
 	}
 }
-
-
 
 /*******************************************************************************
 * инициализация прерывания, имитирующего приём данных по UDP
@@ -250,15 +247,23 @@ void ICACHE_FLASH_ATTR user_udp_receive_cb (void *arg, struct udp_pcb *upcb, str
 	}
 	length = p->tot_len;
 	data = (u32 *)p->payload;
+	g.num_err += len_compare (length);
 	// сравнить IP
-	g.num_err += tcp_compare ((u8*)addr, (u8*)&g.remote_ip.addr);
+	g.num_err += tcp_compare ((u8*)addr, (u8*)&g.ip_other.addr);
 	// сравнить порт
 	g.num_err += port_compare (port, g.remote_port);
-	// сравнить длину
-	g.num_err += len_compare (length);
-	// тест - сравнить номер посылки
-	g.num_err += index_compare (*data);
-	// конец теста
+
+// тест - сравнить номер посылки
+	g.receive_index++;
+	if (*data != g.receive_index)
+	{
+		g.num_err += 8;					// номер ошибки
+		g.prev_index = g.receive_index;	// занести номера индексов
+		g.now_index = *data;
+
+		g.receive_index = *data;		// синхронизация индексов
+	}
+// конец теста
 	if (g.num_err == 0)
 	{
 		if (GPIO->in_bits.pin_4)		// первая проверка на высокий уровень CS
@@ -316,14 +321,14 @@ void ICACHE_FLASH_ATTR user_udp_receive_cb (void *arg, struct udp_pcb *upcb, str
 	}
 	else
 	{
-		g.save_err = g.num_err;
 		g.count_err++;
+//			os_printf ("Error in receive UDP = %d\n", num_err);
 	}
 
 	pbuf_free (p);
 
 	// передача ответа (мне не нужно)
-/*	uint8 pudpbuf[128];
+	uint8 pudpbuf[128];
 	uint32 udpbuflen = 0;
 	udpbuflen = rom_xstrcpy(pudpbuf, "Strings");
 	if (udpbuflen)
@@ -339,7 +344,6 @@ void ICACHE_FLASH_ATTR user_udp_receive_cb (void *arg, struct udp_pcb *upcb, str
 			return;
 		}
 	}
-	*/
 }
 
 inline u8 ICACHE_FLASH_ATTR tcp_compare (u8 *x, u8 *y)
@@ -372,25 +376,11 @@ inline u8 ICACHE_FLASH_ATTR port_compare (int x, int y)
 
 inline u8 ICACHE_FLASH_ATTR len_compare (unsigned short len)
 {
-	if (len == sizeof (b.spi_send))
+	if (len == sizeof (b.send))
 	{
 		return 0;
 	}
 	return 4;
-}
-
-inline u8 ICACHE_FLASH_ATTR index_compare (u32 index)
-{
-	g.receive_index++;
-	if (g.receive_index == index)
-	{
-		return 0;
-	}
-	g.exp_index = g.receive_index;	// занести номера индексов
-	g.rec_index = index;
-	g.save_lost += (index - g.receive_index);
-	g.receive_index = index;		// синхронизация индексов
-	return 8;
 }
 
 /*******************************************************************************
@@ -409,7 +399,7 @@ inline u8 ICACHE_FLASH_ATTR index_compare (u32 index)
 static void __attribute__((optimize("O2"))) spi_int_handler (void *para)
 {
 	dport_isr_flag_t	dport_value = DPORT->isr_flag_bits;
-	__IO u32			*buffer;
+	volatile u32		*buffer;
 	__IO u32			*spi_reg;
 	
 	// прерывание от spi0
@@ -424,9 +414,9 @@ static void __attribute__((optimize("O2"))) spi_int_handler (void *para)
 		SPI1->slave &= ~(SPI_SLAVE_INT_STT_MASK);	// сотрём флаги прерываний
 		if (!g.spi_transmit_mode)	// режим приёма
 		{
-	/*		buffer = (__IO u32 *)&b.spi_receive[g.spi_read_index][0];
+			buffer = b.receive;
 			spi_reg = &SPI1->w0;
-			*buffer++ = *spi_reg++;	// записать данные из SPI в буфер b.spi_receive
+			*buffer++ = *spi_reg++;	// записать данные из SPI в буфер b.receive
 			*buffer++ = *spi_reg++;
 			*buffer++ = *spi_reg++;
 			*buffer++ = *spi_reg++;
@@ -442,19 +432,18 @@ static void __attribute__((optimize("O2"))) spi_int_handler (void *para)
 			*buffer++ = *spi_reg++;
 			*buffer++ = *spi_reg++;
 			*buffer = *spi_reg;
-*/
+
 			// запустить передачу UDP с полученным массивом
 			if (g.state == U_STATE_TRANSMIT)
 			{
-				g.spi_read_index++;
-				if (g.spi_read_index >= NUM_BUFFERS)
-				{
-					g.spi_read_index = 0;
-					// это низкоуровневая функция - на потом
-					ets_post (USER_TASK_PRIO_1, USER_UDP_SEND, NULL);
-					// тест
-					b.spi_receive[0][0]++;	// увеличить индекс
-				}
+				//espconn_udp_sent (&g.user_udp_struct, b.receive, (SIZE_BUFFERS * sizeof (b.receive[0])));
+				// это низкоуровневая функция - на потом
+				udp_recv ();
+				udp_sendto ();	// struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip, u16_t dst_port
+// 				espconn_send (&g.user_udp_struct, (u8 *)b.receive, 64);	// struct espconn *espconn, uint8 *psent, uint16 length
+// тест
+//				espconn_send (&g.user_udp_struct, (u8 *)b.send, 64);	// struct espconn *espconn, uint8 *psent, uint16 length
+				b.send[0]++;	// увеличить индекс
 			}
 			
 			if (g.need_transmit)	// запуск отложенной передачи
@@ -462,8 +451,8 @@ static void __attribute__((optimize("O2"))) spi_int_handler (void *para)
 				GPIO->out_w1ts = GPIO_OUT_W1TS_PIN_13;	// REQ = 1
 				// подождать 100 нс для проверки на состояние мастера - сейчас с помощью записи данных
 				
-				buffer = (__IO u32 *)b.spi_send;
 				spi_reg = &SPI1->w0;	// запись в регистры данных из буфера
+				buffer = b.send
 				*spi_reg++ = *buffer++;	// как влияет запись на регистр чтения?
 				*spi_reg++ = *buffer++;
 				*spi_reg++ = *buffer++;
@@ -520,7 +509,7 @@ static void __attribute__((optimize("O2"))) spi_int_handler (void *para)
 *******************************************************************************/
 void ICACHE_FLASH_ATTR set_udata (void)
 {
-	volatile u32 *p_buf = b.spi_receive[0];
+	volatile u32 *p_buf = b.send; 
 	*p_buf++ = 0;			// index
 	*p_buf++ = 0x05040302;
 	*p_buf++ = 0x09080706;
@@ -540,33 +529,53 @@ void ICACHE_FLASH_ATTR set_udata (void)
 //	*p_buf++ = 0x41404f4e;
 }
 
-inline void read_udata (u8 index)
+void write_udata (void)
 {
-	b.spi_receive[index][0] = SPI1->w0;
-	b.spi_receive[index][1] = SPI1->w1;
-	b.spi_receive[index][2] = SPI1->w2;
-	b.spi_receive[index][3] = SPI1->w3;
-	b.spi_receive[index][4] = SPI1->w4;
-	b.spi_receive[index][5] = SPI1->w5;
-	b.spi_receive[index][6] = SPI1->w6;
-	b.spi_receive[index][7] = SPI1->w7;
-	b.spi_receive[index][8] = SPI1->w8;
-	b.spi_receive[index][9] = SPI1->w9;
-	b.spi_receive[index][10] = SPI1->w10;
-	b.spi_receive[index][11] = SPI1->w11;
-	b.spi_receive[index][12] = SPI1->w12;
-	b.spi_receive[index][13] = SPI1->w13;
-	b.spi_receive[index][14] = SPI1->w14;
-	b.spi_receive[index][15] = SPI1->w15;
+	SPI1->w0 = b.receive[0];
+	SPI1->w1 = b.receive[1];
+	SPI1->w2 = b.receive[2];
+	SPI1->w3 = b.receive[3];
+	SPI1->w4 = b.receive[4];
+	SPI1->w5 = b.receive[5];
+	SPI1->w6 = b.receive[6];
+	SPI1->w7 = b.receive[7];
+	SPI1->w8 = b.receive[8];
+	SPI1->w9 = b.receive[9];
+	SPI1->w10 = b.receive[10];
+	SPI1->w11 = b.receive[11];
+	SPI1->w12 = b.receive[12];
+	SPI1->w13 = b.receive[13];
+	SPI1->w14 = b.receive[14];
+	SPI1->w15 = b.receive[15];
+}
+
+inline void read_udata (void)
+{
+	b.receive[0] = SPI1->w0;
+	b.receive[1] = SPI1->w1;
+	b.receive[2] = SPI1->w2;
+	b.receive[3] = SPI1->w3;
+	b.receive[4] = SPI1->w4;
+	b.receive[5] = SPI1->w5;
+	b.receive[6] = SPI1->w6;
+	b.receive[7] = SPI1->w7;
+	b.receive[8] = SPI1->w8;
+	b.receive[9] = SPI1->w9;
+	b.receive[10] = SPI1->w10;
+	b.receive[11] = SPI1->w11;
+	b.receive[12] = SPI1->w12;
+	b.receive[13] = SPI1->w13;
+	b.receive[14] = SPI1->w14;
+	b.receive[15] = SPI1->w15;
 	
-//	print_udata ((u8 *)b.spi_receive[0], 64);
+//	print_udata ((u8 *)b.receive[0], 64);
 //	print_spi_reg ();
 }
 
 // Прочитать данные из UDP в буфер для передачи
 inline void read_udp_buf (u32 *buf)
 {
-	u32 *receive = b.spi_send[0];
+	u32 *receive = b.send;
 	*receive++ = *buf++;
 	*receive++ = *buf++;
 	*receive++ = *buf++;
@@ -590,7 +599,7 @@ void ICACHE_FLASH_ATTR print_udata (u8 *buf, u32 len)
 	u8 addr = 0;
 	while (len)
 	{
-		ets_uart_printf ("spi_receive address = %X, spi_receive data = %X;\n\r", addr, *buf);
+		ets_uart_printf ("Receive address = %X, receive data = %X;\n\r", addr, *buf);
 		addr++;
 		buf++;
 		len--;
@@ -622,7 +631,7 @@ void ICACHE_FLASH_ATTR print_spi_reg (void)
 }
 
 // тестовая программа для изучения регисторв SPI
-/*void ICACHE_FLASH_ATTR spi_reg_mod (void)
+void ICACHE_FLASH_ATTR spi_reg_mod (void)
 {
 	// будем менять SPI->user
 	static u32 reg = 0x00010000;
@@ -666,6 +675,6 @@ void ICACHE_FLASH_ATTR print_spi_reg (void)
 	
 	
 }
-*/
+
 	
 

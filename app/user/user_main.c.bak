@@ -8,12 +8,11 @@
 #include	<osapi.h>
 #include	<c_types.h>
 #include	<bits.h>
-//#include	<at.h>
-#include	<at_custom.h>
 #include	"driver/uart.h"
 //#include "at_custom.h"
 #include	<user_interface.h>
 #include	<ESP8266_registers.h>
+#include 	"at.h"
 #include	"lwip/app/espconn.h"
 #include	"lwip/app/espconn_udp.h"
 //#include	"user_tcp_server.h"
@@ -45,7 +44,7 @@
 /*********************** define constants *************************************/
 
 
-buffers	b __attribute__((aligned(4), section(".iram.data")));
+buffers	b __attribute__((aligned(4), section(".iram.data"))) = {0};
 global g __attribute__((aligned(4), section(".iram.data")));
 
 
@@ -111,11 +110,10 @@ void ICACHE_FLASH_ATTR at_u_start_exe (uint8_t id)
 	struct ip_info	get_ip;
 	
 	// Начать трансляцию, когда найдётся партнёр
-/*	if (g.state == U_STATE_TRANSMIT)
+	if (g.state == U_STATE_TRANSMIT)
 	{
 		val = user_udp_init ();
 	}
-*/
 	wifi_get_ip_info (STATION_IF, &get_ip);
 	ets_uart_printf ("Read station info:\n");
 	ets_uart_printf ("ip = " IPSTR "\n", IP2STR (&get_ip.ip));
@@ -127,7 +125,16 @@ void ICACHE_FLASH_ATTR at_u_start_exe (uint8_t id)
 	ets_uart_printf ("gw = " IPSTR "\n", IP2STR (&get_ip.gw));
 	ets_uart_printf ("mask = " IPSTR "\n", IP2STR (&get_ip.netmask));
 
-	at_response_ok ();
+//	val = espconn_create (&g.user_udp_struct);	// todo: проверить необходимость espconn_create здесь
+//	ets_uart_printf ("val = %d\n", val);
+	if (val == )
+	{
+		at_response_ok ();
+	}
+	else
+	{
+		at_response_error ();
+	}
 }
 
 /*******************************************************************************
@@ -230,15 +237,10 @@ void ICACHE_FLASH_ATTR at_u_setup_query (uint8_t id)
 	{
 		ets_uart_printf ("Group mode\n");
 	}
-	ets_uart_printf ("Number transmissions = %d\n", (g.receive_index - g.save_index));
-	g.save_index = g.receive_index;
+	ets_uart_printf ("Number transmissions = %d\n", g.receive_index);
 	ets_uart_printf ("Number errors = %d\n", g.count_err);
-	g.count_err = 0;
-	ets_uart_printf ("Lost transmissions = %d\n", g.save_lost);
-	g.save_lost = 0;
-	ets_uart_printf ("Index last error = %d\n", g.save_err);
-	g.save_err = 0;
-//	ets_uart_printf ("Expected index %d Receive index %d\n", g.exp_index, g.rec_index);
+	ets_uart_printf ("Index error = %d\n", g.num_err);
+	ets_uart_printf ("Prev index %d Now index %d\n", g.prev_index, g.now_index);
 	// Ответ для процессора
 	ets_uart_printf ("+USETUP=%d,%d,%d,%d\r\n", g.wifi_mode, g.wifi_ch, g.group_no, g.channel_no);
 	at_response_ok ();
@@ -361,7 +363,7 @@ void ICACHE_FLASH_ATTR init_done (void)
 	ets_uart_printf ("Chip id = 0x%x\r\n", system_get_chip_id ());
 	ets_uart_printf ("CPU freq = %d MHz\r\n", system_get_cpu_freq ());
 	ets_uart_printf ("Free heap size = %d\r\n", system_get_free_heap_size ());
-*/
+*/	
 /*	user_wifi_config ();
 
 	if (g.wifi_mode == U_WIFI_AP_MODE)
@@ -411,17 +413,18 @@ void ICACHE_FLASH_ATTR init_done (void)
 *******************************************************************************/
 void ICACHE_FLASH_ATTR user_init (void)
 {		
+	u8 mac[6];
 	// Configure the UART
 	uart_init (BIT_RATE_115200, BIT_RATE_115200);
 	// read user flash data and set default data
 	data_init ();
-	// init AT commands
-	at_init ();
+	at_init ();					// init AT commands
 	at_cmd_array_regist (at_custom_cmd, 3);	// sizeof (at_custom_cmd) / sizeof (at_custom_cmd[0]));	// setup user AT commands
+	ets_uart_printf ("\r\nready\r\n");
 	// init spi1
-	spi_init ();
+	spi_init ();	
 	// установки wifi
-	user_wifi_config ();
+	user_wifi_config ();					
 	
 	system_init_done_cb (init_done);
 }
@@ -432,41 +435,22 @@ void ICACHE_FLASH_ATTR user_init (void)
 *******************************************************************************/
 void ICACHE_FLASH_ATTR data_init (void)
 {
-	static const char	ssid[32]		= "IP309_0";
-	static const char	password[64]	= "k38sSIP309_0";
-	static const u8 	mac[6]			= {0x1a, 0xfe, 0x34, 0xd6, 0xdd, 0x00};
-
+	char	ssid[32]		= "IP309_0";
+	char	password[64]	= "k38sSIP309_0";
 
 	read_setup_flash ();
 	
+	ssid[6] = (char)(g.group_no + '0');
+	password[11] = (char)(g.group_no + '0');
 	os_memcpy (g.ssid, ssid, 32);
 	os_memcpy (g.password, password, 64);
-	os_memcpy (g.local_mac, mac, sizeof (mac));				// MAC адрес (заготовка)
-	os_memcpy (g.remote_mac, mac, sizeof (mac));			// MAC адрес партнёра (заготовка)
-
-	g.ssid[6] = (char)(g.group_no + '0');
-	g.password[11] = (char)(g.group_no + '0');
 
 	g.state = U_STATE_STOP;
-	g.need_transmit = 0;		// сбросим флаг для ошибки #1
-	g.spi_transmit_mode = 0;	// приём
+	g.need_transmit = 0;
+	g.spi_transmit_mode = 0;
 	g.transmit_index = 0;
 	g.receive_index = 0;
 	g.count_err = 0;
-	g.user_pcbv = NULL;
-	g.spi_read_index = 0;
-
-	// тестовые значения
-	g.transmit_index = 0;
-	g.receive_index = 0;
-	g.save_index = 0;
-	g.save_err = 0;
-	g.save_lost = 0;
-	g.num_err = 0;
-	g.count_err = 0;
-	g.exp_index = 0;
-	g.rec_index = 0;
-
 }
 
 

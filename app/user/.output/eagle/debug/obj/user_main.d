@@ -19,7 +19,8 @@
  c:\espressif\xtensa-lx106-elf\lib\gcc\xtensa-lx106-elf\5.2.0\include\stddef.h \
  c:\espressif\xtensa-lx106-elf\xtensa-lx106-elf\include\sys\cdefs.h \
  c:\espressif\xtensa-lx106-elf\xtensa-lx106-elf\include\sys\string.h \
- c:/Espressif/ESP8266_SDK/include/c_types.h ../include/driver/uart.h \
+ c:/Espressif/ESP8266_SDK/include/c_types.h \
+ c:/Espressif/ESP8266_SDK/include/at_custom.h ../include/driver/uart.h \
  c:/Espressif/ESP8266_SDK/include/user_interface.h \
  c:/Espressif/ESP8266_SDK/include/os_type.h \
  c:/Espressif/ESP8266_SDK/include/ets_sys.h \
@@ -30,10 +31,11 @@
  ../include/lwip/opt.h ../include/lwipopts.h ../include/lwip/debug.h \
  ../include/lwip/arch.h ../include/arch/cc.h ../include/lwip/def.h \
  c:/Espressif/ESP8266_SDK/include/queue.h \
- c:/Espressif/ESP8266_SDK/include/ESP8266_registers.h ../include/at.h \
+ c:/Espressif/ESP8266_SDK/include/ESP8266_registers.h \
  ../include/lwip/app/espconn.h ../include/lwip/dns.h \
  ../include/lwip/err.h ../include/lwip/app/espconn_buf.h \
  ../include/lwip/app/espconn_udp.h ../include/global.h \
- ../include/lwip/ip_addr.h ../include/lwip/app/espconn.h \
- ../include/lwip/err.h ../include/user_setup.h ../include/user_spi.h \
+ ../include/lwip/ip_addr.h ../include/lwip/udp.h ../include/lwip/pbuf.h \
+ ../include/lwip/netif.h ../include/lwip/ip.h ../include/lwip/err.h \
+ ../include/user_setup.h ../include/user_spi.h ../include/lwip/pbuf.h \
  ../include/user_flash.h
