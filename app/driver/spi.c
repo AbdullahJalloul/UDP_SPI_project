@@ -312,14 +312,19 @@ static uint8 idx = 0;
 #define SPI_MISO
 #define SPI_QUEUE_LEN 8
 os_event_t * spiQueue;
-#define MOSI  0
-#define MISO  1
-#define STATUS_R_IN_WR 2
-#define STATUS_W  3
-#define TR_DONE_ALONE  4
-#define WR_RD 5
-#define DATA_ERROR 6
-#define STATUS_R_IN_RD 7
+
+enum
+{
+	MOSI = 0,
+	MISO,
+	STATUS_R_IN_WR,
+	STATUS_W,
+	TR_DONE_ALONE,
+	WR_RD,
+	DATA_ERROR,
+	STATUS_R_IN_RD
+};
+
 //init the two intr line of slave
 //gpio0: wr_ready , and
 //gpio2: rd_ready , controlled by slave

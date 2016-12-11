@@ -40,10 +40,11 @@ extern "C" {
 #endif
 
 /* Create the list of all memory pools managed by memp. MEMP_MAX represents a NULL pool at the end */
-typedef enum {
-#define LWIP_MEMPOOL(name,num,size,desc, attr)  MEMP_##name,
+typedef enum
+{
+#define LWIP_MEMPOOL(name,num,size,desc,attr)  MEMP_##name,
 #include "lwip/memp_std.h"
-  MEMP_MAX
+	MEMP_MAX
 } memp_t;
 
 #if MEM_USE_POOLS
@@ -97,7 +98,7 @@ struct memp_malloc_helper
 };
 #endif /* MEM_USE_POOLS */
 
-void  memp_init(void)ICACHE_FLASH_ATTR;
+void ICACHE_FLASH_ATTR  memp_init(void);
 
 #if MEMP_OVERFLOW_CHECK
 void *memp_malloc_fn(memp_t type, const char* file, const int line)ICACHE_FLASH_ATTR;

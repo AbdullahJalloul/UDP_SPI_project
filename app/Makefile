@@ -65,30 +65,30 @@ COMPONENTS_eagle.app.v6 = \
 	lwip/liblwip.a
 
 LINKFLAGS_eagle.app.v6 = \
-	-L$(SDK_BASE)/lib        \
-	-nostdlib	\
-	-T$(LD_FILE)   \
+	-L$(SDK_BASE)/lib	\
+	-nostdlib		\
+	-T$(LD_FILE)	\
 	-Wl,--no-check-sections	\
 	-u call_user_start	\
-	-Wl,-static						\
-	-Wl,--start-group					\
-	-lc					\
-	-lgcc					\
-	-lhal					\
-	-lphy	\
-	-lpp	\
-	-lat	\
+	-Wl,-static			\
+	-Wl,--start-group	\
+	-lc			\
+	-lgcc		\
+	-lhal		\
+	-lphy		\
+	-lpp		\
+	-lat		\
 	-lnet80211	\
-	-lwpa	\
-	-lmain	\
-	-ljson	\
-	-lupgrade\
-	-lssl	\
-	-lpwm	\
-	-lsmartconfig \
-	-llwip	\
-	-lcrypto \
-	$(DEP_LIBS_eagle.app.v6)					\
+	-lwpa		\
+	-lmain		\
+	-ljson		\
+	-lupgrade	\
+	-lssl		\
+	-lpwm		\
+	-lsmartconfig	\
+	-llwip		\
+	-lcrypto 	\
+	$(DEP_LIBS_eagle.app.v6)\
 	-Wl,--end-group
 #	-lwps	\
 #	-lairkiss	\

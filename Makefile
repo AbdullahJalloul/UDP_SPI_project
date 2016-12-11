@@ -131,7 +131,8 @@ else
   endif
 endif
 
-USERFSIZE = $(shell printf '0x%X\n' $$(($(FLASH_SIZE) - $(USERFADDR) - (0x00001000) )) )
+# добавил 5 секторов для SDK2.0
+USERFSIZE = $(shell printf '0x%X\n' $$(($(FLASH_SIZE) - $(USERFADDR) - (0x00006000) )) )
 
 # select which tools to use as compiler, librarian and linker
 CC := $(XTENSA_TOOLS_ROOT)/xtensa-lx106-elf-gcc

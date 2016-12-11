@@ -3,13 +3,13 @@
 
 #include "c_types.h"
 
-struct ip_addr
+/*struct ip_addr
 {
 	uint32 addr;
 };
 
 typedef struct ip_addr ip_addr_t;
-
+*/
 /*struct ip_info
 {
 	struct ip_addr ip;

@@ -108,7 +108,7 @@ bool ICACHE_FLASH_ATTR write_setup_flash (void)
 	flash_record	*user_record;
 	flash_record	user_data;
 //	SpiFlashOpResult w;
-	u32				del = FLASH_RECORD_DELETED;
+	static const u32	del = FLASH_RECORD_DELETED;
 	u32				temp;
 	
 	user_record = find_user_record ();
@@ -158,7 +158,7 @@ bool ICACHE_FLASH_ATTR write_setup_flash (void)
 			ets_uart_printf ("Byte before erasing = %x\n", temp);
 */
 			ETS_UART_INTR_DISABLE();
-			spi_flash_write ((u32)user_record, &del, sizeof(u32));
+			spi_flash_write ((u32)user_record, (u32 *)&del, sizeof(u32));
 			ETS_UART_INTR_ENABLE();
 //			spi_flash_read_array ((u32)user_record, &temp, sizeof (temp));
 //			ets_uart_printf ("Byte after erasing = %x\n", temp);

@@ -20,7 +20,8 @@
 
 #include	"global.h"
 
-#include	"user_setup.h"
+#include	"wifi_ap_tcp_server_setup.h"
+#include	"wifi_station_tcp_client.h"
 #include	"user_spi.h"
 #include	"user_flash.h"
 
@@ -52,21 +53,22 @@ global g __attribute__((aligned(4), section(".iram.data")));
 /************************ typedef func ****************************************/
 int ets_uart_printf (const char *fmt, ...);
 
-void at_u_setup_test (uint8_t id);
-void at_u_setup_query (uint8_t id);
-void at_u_setup_setup (uint8_t id, char *pPara);
-void at_u_setup_exe (uint8_t id);
+static void 	at_u_setup_test (uint8_t id);
+static void 	at_u_setup_query (uint8_t id);
+static void 	at_u_setup_setup (uint8_t id, char *pPara);
+static void	 	at_u_setup_exe (uint8_t id);
 
-void at_u_start_test (uint8_t id);
-void at_u_start_query (uint8_t id);
-void at_u_start_exe (uint8_t id);
+static void 	at_u_start_test (uint8_t id);
+static void 	at_u_start_query (uint8_t id);
+static void 	at_u_start_exe (uint8_t id);
 
-void at_u_stop_test (uint8_t id);
-void at_u_stop_query (uint8_t id);
-void at_u_stop_exe (uint8_t id);
+static void 	at_u_stop_test (uint8_t id);
+static void 	at_u_stop_query (uint8_t id);
+static void 	at_u_stop_exe (uint8_t id);
 
-void init_done (void);
-void data_init (void);
+static void 	init_done (void);
+static void		data_init (void);
+static void		user_wifi_setup		(void);
 
 at_funcationType at_custom_cmd[3] =
 {
@@ -138,17 +140,17 @@ void ICACHE_FLASH_ATTR at_u_start_query (uint8_t id)
 {
 	if (g.state == U_STATE_STOP)
 	{
-		ets_uart_printf ("UDP stop\n");
+		ets_uart_printf ("TCP stop\n");
 		at_response_error ();
 	}
 	else if (g.state == U_STATE_SEARCH)
 	{
-		ets_uart_printf ("UDP search\n");
+		ets_uart_printf ("TCP search\n");
 		at_response_error ();
 	}
 	else	// U_STATE_TRANSMIT
 	{
-		ets_uart_printf ("UDP transmit\n");
+		ets_uart_printf ("TCP transmit\n");
 		at_response_ok ();
 	}
 }
@@ -230,14 +232,6 @@ void ICACHE_FLASH_ATTR at_u_setup_query (uint8_t id)
 	{
 		ets_uart_printf ("Group mode\n");
 	}
-	ets_uart_printf ("Number transmissions = %d\n", (g.receive_index - g.save_index));
-	g.save_index = g.receive_index;
-	ets_uart_printf ("Number errors = %d\n", g.count_err);
-	g.count_err = 0;
-	ets_uart_printf ("Lost transmissions = %d\n", g.save_lost);
-	g.save_lost = 0;
-	ets_uart_printf ("Index last error = %d\n", g.save_err);
-	g.save_err = 0;
 //	ets_uart_printf ("Expected index %d Receive index %d\n", g.exp_index, g.rec_index);
 	// Ответ для процессора
 	ets_uart_printf ("+USETUP=%d,%d,%d,%d\r\n", g.wifi_mode, g.wifi_ch, g.group_no, g.channel_no);
@@ -337,6 +331,29 @@ void ICACHE_FLASH_ATTR at_u_setup_setup (uint8_t id, char *pPara)
 	user_wifi_setup ();
 }
 
+
+/*******************************************************************************
+ * Сохранение данных после команды AT+USETUP=
+ * и перезапуск ESP8266
+ *******************************************************************************/
+void ICACHE_FLASH_ATTR user_wifi_setup (void)
+{
+	// сравнение с сохранёнными настройками
+	if (compare_user_data () == false)
+	{
+		// записи отличаются - сохранить во флеш
+		write_setup_flash ();
+		// и перезапуск ESP8266
+		system_restart ();
+	}
+	else
+	{
+		// печать "ready" для совместимости со стартом
+		ets_uart_printf ("\r\nready\r\n");
+	}
+}
+
+
 /*******************************************************************************
  * Функция ответа на команду AT+USETUP
  ******************************************************************************/
@@ -362,47 +379,11 @@ void ICACHE_FLASH_ATTR init_done (void)
 	ets_uart_printf ("CPU freq = %d MHz\r\n", system_get_cpu_freq ());
 	ets_uart_printf ("Free heap size = %d\r\n", system_get_free_heap_size ());
 */
-/*	user_wifi_config ();
-
-	if (g.wifi_mode == U_WIFI_AP_MODE)
-	{
-		wifi_get_macaddr (SOFTAP_IF, macaddr);
-	}
 	if (g.wifi_mode == U_WIFI_STA_MODE)
 	{
-		wifi_get_macaddr (STATION_IF, macaddr);
+		wifi_station_connect ();
 	}
-	ets_uart_printf ("Wifi phy mode = %d\r\n", wifi_get_phy_mode ());
 
-	if (wifi_station_get_auto_connect () == 0)
-	{
-		wifi_station_set_auto_connect (1);
-	}
-	
-	ets_uart_printf ("Wi-Fi mode: %s\r\n", WiFiMode[wifi_get_opmode ()]);
-	if (g.wifi_mode == U_WIFI_AP_MODE)
-	{
-		struct softap_config apConfig;
-		if (wifi_softap_get_config (&apConfig))
-		{
-			ets_uart_printf ("AP config: SSID: %s, PASSWORD: %s\r\n",
-			        apConfig.ssid,
-			        apConfig.password);
-		}
-	}
-	if (g.wifi_mode == U_WIFI_STA_MODE)
-	{
-		struct station_config stationConfig;
-		if (wifi_station_get_config (&stationConfig))
-		{
-			ets_uart_printf ("STA config: SSID: %s, PASSWORD: %s\r\n",
-			        stationConfig.ssid,
-			        stationConfig.password);
-		}
-	}
-	
-	ets_uart_printf ("ESP8266 platform started!\r\n");
-*/
 	ets_uart_printf ("\r\nready\r\n");
 }
 
@@ -421,7 +402,14 @@ void ICACHE_FLASH_ATTR user_init (void)
 	// init spi1
 	spi_init ();
 	// установки wifi
-	user_wifi_config ();
+	if (g.wifi_mode == U_WIFI_AP_MODE)
+	{
+		wifi_config_ap ();
+	}
+	else
+	{
+		wifi_config_station ();
+	}
 	
 	system_init_done_cb (init_done);
 }
@@ -432,40 +420,21 @@ void ICACHE_FLASH_ATTR user_init (void)
 *******************************************************************************/
 void ICACHE_FLASH_ATTR data_init (void)
 {
-	static const char	ssid[32]		= "IP309_0";
-	static const char	password[64]	= "k38sSIP309_0";
-	static const u8 	mac[6]			= {0x1a, 0xfe, 0x34, 0xd6, 0xdd, 0x00};
-
 
 	read_setup_flash ();
 	
-	os_memcpy (g.ssid, ssid, 32);
-	os_memcpy (g.password, password, 64);
-	os_memcpy (g.local_mac, mac, sizeof (mac));				// MAC адрес (заготовка)
-	os_memcpy (g.remote_mac, mac, sizeof (mac));			// MAC адрес партнёра (заготовка)
-
-	g.ssid[6] = (char)(g.group_no + '0');
-	g.password[11] = (char)(g.group_no + '0');
-
 	g.state = U_STATE_STOP;
 	g.need_transmit = 0;		// сбросим флаг для ошибки #1
 	g.spi_transmit_mode = 0;	// приём
-	g.transmit_index = 0;
-	g.receive_index = 0;
-	g.count_err = 0;
 	g.user_pcbv = NULL;
+	g.wifi_pw = 20;
+
+	g.spi_read_size = 0;
 	g.spi_read_index = 0;
+	g.spi_transmit_size = 0;
+	g.spi_transmit_index = 0;
 
 	// тестовые значения
-	g.transmit_index = 0;
-	g.receive_index = 0;
-	g.save_index = 0;
-	g.save_err = 0;
-	g.save_lost = 0;
-	g.num_err = 0;
-	g.count_err = 0;
-	g.exp_index = 0;
-	g.rec_index = 0;
 
 }
 

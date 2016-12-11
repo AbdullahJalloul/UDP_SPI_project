@@ -18,11 +18,12 @@ enum
 	USER_UDP_INIT,
 	USER_UDP_STOP,
 	USER_UDP_START,
-	USER_UDP_RECEIVE
+	USER_UDP_RECEIVE,
+	USER_TCP_SEND
 };
 
 void	spi_init			(void);
 void	set_udata			(void);
-void	user_udp_receive_cb	(void *arg, struct udp_pcb *upcb, struct pbuf *p, ip_addr_t *addr, u16 port);
+void	user_tcp_receive_cb	(void *arg, char *pusrdata, unsigned short length);
 
 #endif /* _USER_SPI_H_ */

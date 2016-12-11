@@ -12,22 +12,24 @@
 #include	<ESP8266_registers.h>
 #include	"global.h"
 #include	"user_spi.h"
+#include	"user_setup.h"
 
 #define		USER_QUEUES		3
 
 //static void	gpio5_setup			(void);
 //static void	pin_int_handler		(void *para);
+//inline void	read_udp_buf		(u32 *buf);
+inline void	write_buf_to_spi		(u32 *buf);
+inline void	cashe_write_buf_to_spi	(u32 *buf);
+inline void	read_spi_to_buf			(u32 *buf);
+inline void	wait_100_ns				(void);
+inline void	cashe_wait_100_ns		(void);
+
 static void	spi_int_handler		(void *para);
 void		print_udata			(u8 *buf, u32 len);
-void		read_udata			(u8 index);
 void		print_spi_reg		(void);
 //void		spi_reg_mod			(void);
-void		read_udp_buf		(u32 *buf);
-
-u8			tcp_compare			(u8 *x, u8 *y);
-u8			port_compare		(int x, int y);
-u8			len_compare			(unsigned short len);
-u8			index_compare		(u32 index);
+//void		read_udp_buf		(u32 *buf);
 
 void		task_user			(os_event_t *e);
 
@@ -130,7 +132,7 @@ void ICACHE_FLASH_ATTR spi_init (void)
 	set_udata ();	// тестовые данные
 
 	// задача для отправки данных по UDP
-	ets_task (task_user, USER_TASK_PRIO_1, task_user_queue, USER_QUEUES);	// + SDK_TASK_PRIO
+	system_os_task (task_user, USER_TASK_PRIO_2, task_user_queue, USER_QUEUES);	// + SDK_TASK_PRIO
 }
 
 /*******************************************************************************
@@ -138,21 +140,38 @@ void ICACHE_FLASH_ATTR spi_init (void)
 *******************************************************************************/
 void ICACHE_FLASH_ATTR task_user (os_event_t *e)
 {
-	switch (e->sig)
+	switch (e->sig) // определить, что нужно сделать при вызове задачи
 	{
 	case USER_UDP_SEND:
 		user_tx ();
 		break;
+
 /*	case USER_UDP_INIT:
 		wdrv_init (e->par);
 		break;
+
 	case USER_UDP_STOP:
 		wdrv_stop ();
 		break;
+
 	case USER_UDP_START:
 		wdrv_start (e->par);
 		break;
 */
+	case USER_TCP_SEND:
+		if (g.state == U_STATE_TRANSMIT)
+		{
+			if (g.wifi_mode == U_WIFI_AP_MODE)
+			{
+				tcp_server_send ();
+			}
+			else
+			{
+				tcp_client_send ();
+			}
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -200,13 +219,7 @@ void ICACHE_FLASH_ATTR task_user (os_event_t *e)
 		{
 			GPIO->out_w1ts = GPIO_OUT_W1TS_PIN_13;	// REQ = 1
 			// подождать 100 нс для проверки на состояние мастера
-			__asm__ __volatile__ ("nop");	// 1/80 MHZ = 12.5 ns
-			__asm__ __volatile__ ("nop");
-			__asm__ __volatile__ ("nop");
-			__asm__ __volatile__ ("nop");
-			__asm__ __volatile__ ("nop");
-			__asm__ __volatile__ ("nop");
-			__asm__ __volatile__ ("nop");
+			wait_100_ns ();
 			// проверить CS заново
 			if (GPIO->in_bits.pin_4)	// реакции нет - передача разрешена
 			{
@@ -232,168 +245,65 @@ void ICACHE_FLASH_ATTR task_user (os_event_t *e)
 */
 
 /*******************************************************************************
-* функция, вызываемая после приёма данных по UDP
+* функция, вызываемая после приёма данных по TCP
 * 
+* решена проблема с передачей нескольких пакетов из буфера
 *******************************************************************************/
-void ICACHE_FLASH_ATTR user_udp_receive_cb (void *arg, struct udp_pcb *upcb, struct pbuf *p, ip_addr_t *addr, u16_t port)
+void ICACHE_FLASH_ATTR user_tcp_receive_cb (void *arg, char *pusrdata, unsigned short length)
 {
-	u32 length;
 	u32 *data;
 
-	g.num_err = 0;
+	if (pusrdata == NULL) return;
+	if (length < 1) return;
 
-	if (p == NULL) return;
-	if (p->tot_len < 1)
+	data = (u32 *)pusrdata;
+
+	// скопировать данные в буфер передачи
+	// желательно по DMA
+	os_memcpy (b.spi_send, data, length);
+	g.spi_transmit_index = 0;
+	g.spi_transmit_size = length;	// длина блока должна быть кратна 64 - буфер SPI
+	// передача первых 16 слов по SPI
+	if (GPIO->in_bits.pin_4)		// первая проверка на высокий уровень CS
 	{
-		pbuf_free (p);
-		return;
-	}
-	length = p->tot_len;
-	data = (u32 *)p->payload;
-	// сравнить IP
-	g.num_err += tcp_compare ((u8*)addr, (u8*)&g.remote_ip.addr);
-	// сравнить порт
-	g.num_err += port_compare (port, g.remote_port);
-	// сравнить длину
-	g.num_err += len_compare (length);
-	// тест - сравнить номер посылки
-	g.num_err += index_compare (*data);
-	// конец теста
-	if (g.num_err == 0)
-	{
-		if (GPIO->in_bits.pin_4)		// первая проверка на высокий уровень CS
+		GPIO->out_w1ts = GPIO_OUT_W1TS_PIN_13;	// REQ = 1 установка запроса на передачу
+		// подождать 100 нс для проверки на состояние мастера
+		cashe_wait_100_ns ();
+		// проверить CS заново
+		if (GPIO->in_bits.pin_4)	// реакции нет - передача разрешена
 		{
-			GPIO->out_w1ts = GPIO_OUT_W1TS_PIN_13;	// REQ = 1
-			// подождать 100 нс для проверки на состояние мастера
-
-			__asm__ __volatile__ ("nop");	// 1/80 MHZ = 12.5 ns
-			__asm__ __volatile__ ("nop");
-			__asm__ __volatile__ ("nop");
-			__asm__ __volatile__ ("nop");
-			__asm__ __volatile__ ("nop");
-			__asm__ __volatile__ ("nop");
-			__asm__ __volatile__ ("nop");
-
-			// проверить CS заново
-			if (GPIO->in_bits.pin_4)	// реакции нет - передача разрешена
+			cashe_write_buf_to_spi (b.spi_send[0]);	// записать данные в буфер SPI
+			SPI1->user = SPI_USER_MISO;		// в slave режиме это передача!!!
+			SPI1->pin = SPI_PIN_CLK1_CS0;	// режим передачи
+			SPI1->cmd = SPI_CMD_USR;		// transmission start
+			g.spi_transmit_mode = 1;		// режим передачи spi
+			g.spi_transmit_index++;
+			if (g.spi_transmit_size > 64)
 			{
-				SPI1->w0 = *data++;			// записать данные в буфер SPI
-				SPI1->w1 = *data++;
-				SPI1->w2 = *data++;
-				SPI1->w3 = *data++;
-				SPI1->w4 = *data++;
-				SPI1->w5 = *data++;
-				SPI1->w6 = *data++;
-				SPI1->w7 = *data++;
-				SPI1->w8 = *data++;
-				SPI1->w9 = *data++;
-				SPI1->w10 = *data++;
-				SPI1->w11 = *data++;
-				SPI1->w12 = *data++;
-				SPI1->w13 = *data++;
-				SPI1->w14 = *data++;
-				SPI1->w15 = *data;
-
-				g.spi_transmit_mode = 1;		// режим передачи
-				g.need_transmit = 0;
-				SPI1->user = SPI_USER_MISO;		// в slave режиме это передача!!!
-				SPI1->pin = SPI_PIN_CLK1_CS0;	// режим передачи
-				SPI1->cmd = SPI_CMD_USR;		// transmission start
-				// дальше работаем в прерывании spi по чтению буфера
-			}
-			else	// конфликт №3: мастер передаёт данные одновременно со слейвом
-			{
-				read_udp_buf ((u32*)data);	// читаем данные в свой буфер
+				g.spi_transmit_size -= 64;
 				g.need_transmit = 1;	// установим флаг для запуска отложенной передачи
 			}
-			GPIO->out_w1tc = GPIO_OUT_W1TC_PIN_13;	// REQ = 0
+			else
+			{
+				g.need_transmit = 0;
+			}
+			// дальше работаем в прерывании spi по чтению буфера
 		}
-		else	// конфликт №1: запрос на передачу во время приёма
+		else	// конфликт №3: мастер передаёт данные одновременно со слейвом
 		{
-			read_udp_buf ((u32*)data);	// читаем данные в свой буфер
 			g.need_transmit = 1;	// установим флаг для запуска отложенной передачи
 		}
+		GPIO->out_w1tc = GPIO_OUT_W1TC_PIN_13;	// REQ = 0 сброс запроса на передачу
 	}
-	else
+	else	// конфликт №1: запрос на передачу во время приёма
 	{
-		g.save_err = g.num_err;
-		g.count_err++;
+		g.need_transmit = 1;	// установим флаг для запуска отложенной передачи
 	}
-
-	pbuf_free (p);
-
-	// передача ответа (мне не нужно)
-/*	uint8 pudpbuf[128];
-	uint32 udpbuflen = 0;
-	udpbuflen = rom_xstrcpy(pudpbuf, "Strings");
-	if (udpbuflen)
-	{
-		struct pbuf *z = pbuf_alloc (PBUF_TRANSPORT, udpbuflen, PBUF_RAM);
-		if (z != NULL)
-		{
-			if (pbuf_take (z, pudpbuf, udpbuflen) == ERR_OK)
-			{
-				udp_sendto (upcb, z, addr, port);
-			}
-			pbuf_free (z);
-			return;
-		}
-	}
-	*/
 }
 
-inline u8 ICACHE_FLASH_ATTR tcp_compare (u8 *x, u8 *y)
-{
-	if (*x++ == *y++)
-	{
-		if (*x++ == *y++)
-		{
-			if (*x++ == *y++)
-			{
-				if (*x == *y)
-				{
-					return 0;
-				}
-			}
-		}
-	}
-	return 1;
-}
-
-inline u8 ICACHE_FLASH_ATTR port_compare (int x, int y)
-{
-	if (x == y)
-	{
-		return 0;
-	}
-	return 2;
-}
-
-
-inline u8 ICACHE_FLASH_ATTR len_compare (unsigned short len)
-{
-	if (len == sizeof (b.spi_send))
-	{
-		return 0;
-	}
-	return 4;
-}
-
-inline u8 ICACHE_FLASH_ATTR index_compare (u32 index)
-{
-	g.receive_index++;
-	if (g.receive_index == index)
-	{
-		return 0;
-	}
-	g.exp_index = g.receive_index;	// занести номера индексов
-	g.rec_index = index;
-	g.save_lost += (index - g.receive_index);
-	g.receive_index = index;		// синхронизация индексов
-	return 8;
-}
 
 /*******************************************************************************
+* Прерывание SPI
 * Slave режим
 * Прерывание после передачи 16 слов данных SPI1
 * Может вызываться в двух режимах: приёма и передачи данных
@@ -422,75 +332,47 @@ static void __attribute__((optimize("O2"))) spi_int_handler (void *para)
 	if (dport_value.spi1_isr)
 	{
 		SPI1->slave &= ~(SPI_SLAVE_INT_STT_MASK);	// сотрём флаги прерываний
-		if (!g.spi_transmit_mode)	// режим приёма
+
+		if (!g.spi_transmit_mode)	// режим приёма SPI
 		{
-	/*		buffer = (__IO u32 *)&b.spi_receive[g.spi_read_index][0];
-			spi_reg = &SPI1->w0;
-			*buffer++ = *spi_reg++;	// записать данные из SPI в буфер b.spi_receive
-			*buffer++ = *spi_reg++;
-			*buffer++ = *spi_reg++;
-			*buffer++ = *spi_reg++;
-			*buffer++ = *spi_reg++;
-			*buffer++ = *spi_reg++;
-			*buffer++ = *spi_reg++;
-			*buffer++ = *spi_reg++;
-			*buffer++ = *spi_reg++;
-			*buffer++ = *spi_reg++;
-			*buffer++ = *spi_reg++;
-			*buffer++ = *spi_reg++;
-			*buffer++ = *spi_reg++;
-			*buffer++ = *spi_reg++;
-			*buffer++ = *spi_reg++;
-			*buffer = *spi_reg;
-*/
-			// запустить передачу UDP с полученным массивом
+			// записать данные из SPI в буфер b.spi_receive
+			read_spi_to_buf (b.spi_receive[g.spi_read_index]);
+			// по заполнению буфера
+			// запустить передачу WiFi с полученным массивом
 			if (g.state == U_STATE_TRANSMIT)
 			{
 				g.spi_read_index++;
 				if (g.spi_read_index >= NUM_BUFFERS)
 				{
 					g.spi_read_index = 0;
-					// это низкоуровневая функция - на потом
-					ets_post (USER_TASK_PRIO_1, USER_UDP_SEND, NULL);
-					// тест
-					b.spi_receive[0][0]++;	// увеличить индекс
+					// передача данных задаче для передачи по WiFi
+//					ets_post (USER_TASK_PRIO_1, USER_UDP_SEND, NULL);	// вариант с UDP
+					ets_post (USER_TASK_PRIO_1, USER_TCP_SEND, NULL);	// вариант с TCP
 				}
 			}
 			
-			if (g.need_transmit)	// запуск отложенной передачи
+			if (g.need_transmit)	// запуск отложенной передачи по SPI
 			{
 				GPIO->out_w1ts = GPIO_OUT_W1TS_PIN_13;	// REQ = 1
 				// подождать 100 нс для проверки на состояние мастера - сейчас с помощью записи данных
-				
-				buffer = (__IO u32 *)b.spi_send;
-				spi_reg = &SPI1->w0;	// запись в регистры данных из буфера
-				*spi_reg++ = *buffer++;	// как влияет запись на регистр чтения?
-				*spi_reg++ = *buffer++;
-				*spi_reg++ = *buffer++;
-				*spi_reg++ = *buffer++;
-				*spi_reg++ = *buffer++;
-				*spi_reg++ = *buffer++;
-				*spi_reg++ = *buffer++;
-				*spi_reg++ = *buffer++;
-				*spi_reg++ = *buffer++;
-				*spi_reg++ = *buffer++;
-				*spi_reg++ = *buffer++;
-				*spi_reg++ = *buffer++;
-				*spi_reg++ = *buffer++;
-				*spi_reg++ = *buffer++;
-				*spi_reg++ = *buffer++;
-				*spi_reg = *buffer;
-				
+				wait_100_ns ();
 				// проверить CS
 				if (GPIO->in_bits.pin_4)		// реакции CS на REQ нет - передача разрешена
 				{
-					g.spi_transmit_mode = 1;	// режим передачи
-					g.need_transmit = 0;
+					write_buf_to_spi (b.spi_send[g.spi_transmit_index]);	// запись в регистры данных из буфера
 					SPI1->user = SPI_USER_MISO;		// в slave режиме это передача!!!
 					SPI1->pin = SPI_PIN_CLK1_CS0;	// режим передачи
-//					SPI1->slave_bits.sync_reset = 1;
 					SPI1->cmd = SPI_CMD_USR;		// transmission start
-					// дальше работаем в прерывании spi по чтению буфера
+					g.spi_transmit_mode = 1;	// режим передачи
+					g.spi_transmit_index++;
+					if (g.spi_transmit_size > 64)	// проверка на размер данных
+					{
+						g.spi_transmit_size -= 64;
+					}
+					else
+					{
+						g.need_transmit = 0;	// это последняя посылка
+					}
 				}
 				else	// конфликт №3: мастер передаёт данные одновременно со слейвом
 				{
@@ -499,14 +381,31 @@ static void __attribute__((optimize("O2"))) spi_int_handler (void *para)
 				GPIO->out_w1tc = GPIO_OUT_W1TC_PIN_13;	// REQ = 0
 			}
 		}
-		else	// режим передачи
+		else	// режим передачи spi
 		{
-			SPI1->user = SPI_USER_MOSI;		// в slave режиме это приём!!!
-			SPI1->pin = SPI_PIN_MOSI_MISO | SPI_PIN_CLK1_CS0;	// режим приёма
-//			SPI1->slave_bits.sync_reset = 1;
-			SPI1->cmd = SPI_CMD_USR;		// ready to slave read
-			g.spi_transmit_mode = 0;
-			// передали - свободны
+			if (g.need_transmit)	// если ещё нужно передавать данные по spi
+			{
+				write_buf_to_spi (b.spi_send[g.spi_transmit_index]);	// записать данные в буфер SPI
+				SPI1->user = SPI_USER_MISO;		// в slave режиме это передача!!!
+				SPI1->pin = SPI_PIN_CLK1_CS0;	// режим передачи
+				SPI1->cmd = SPI_CMD_USR;		// transmission start
+				g.spi_transmit_index++;
+				if (g.spi_transmit_size > 64)	// проверка на размер данных
+				{
+					g.spi_transmit_size -= 64;
+				}
+				else
+				{
+					g.need_transmit = 0;	// это последняя посылка
+				}
+			}
+			else	// передали - свободны
+			{
+				SPI1->user = SPI_USER_MOSI;		// в slave режиме это приём!!!
+				SPI1->pin = SPI_PIN_MOSI_MISO | SPI_PIN_CLK1_CS0;	// режим приёма
+				SPI1->cmd = SPI_CMD_USR;		// ready to slave read
+				g.spi_transmit_mode = 0;
+			}
 		}
 	}
 	if (dport_value.i2s_isr)
@@ -540,49 +439,110 @@ void ICACHE_FLASH_ATTR set_udata (void)
 //	*p_buf++ = 0x41404f4e;
 }
 
-inline void read_udata (u8 index)
+/******************************************************************************
+* Записать 16 слов в SPI
+******************************************************************************/
+inline void write_buf_to_spi (u32 *buf)
 {
-	b.spi_receive[index][0] = SPI1->w0;
-	b.spi_receive[index][1] = SPI1->w1;
-	b.spi_receive[index][2] = SPI1->w2;
-	b.spi_receive[index][3] = SPI1->w3;
-	b.spi_receive[index][4] = SPI1->w4;
-	b.spi_receive[index][5] = SPI1->w5;
-	b.spi_receive[index][6] = SPI1->w6;
-	b.spi_receive[index][7] = SPI1->w7;
-	b.spi_receive[index][8] = SPI1->w8;
-	b.spi_receive[index][9] = SPI1->w9;
-	b.spi_receive[index][10] = SPI1->w10;
-	b.spi_receive[index][11] = SPI1->w11;
-	b.spi_receive[index][12] = SPI1->w12;
-	b.spi_receive[index][13] = SPI1->w13;
-	b.spi_receive[index][14] = SPI1->w14;
-	b.spi_receive[index][15] = SPI1->w15;
-	
-//	print_udata ((u8 *)b.spi_receive[0], 64);
-//	print_spi_reg ();
+	__IO u32	*spi_reg	= &SPI1->w0;
+	__IO u32	*buffer		= (__IO u32 *)buf;
+
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg = *buffer;
 }
 
-// Прочитать данные из UDP в буфер для передачи
-inline void read_udp_buf (u32 *buf)
+/******************************************************************************
+* Записать 16 слов в SPI
+******************************************************************************/
+inline void ICACHE_FLASH_ATTR cashe_write_buf_to_spi (u32 *buf)
 {
-	u32 *receive = b.spi_send[0];
-	*receive++ = *buf++;
-	*receive++ = *buf++;
-	*receive++ = *buf++;
-	*receive++ = *buf++;
-	*receive++ = *buf++;
-	*receive++ = *buf++;
-	*receive++ = *buf++;
-	*receive++ = *buf++;
-	*receive++ = *buf++;
-	*receive++ = *buf++;
-	*receive++ = *buf++;
-	*receive++ = *buf++;
-	*receive++ = *buf++;
-	*receive++ = *buf++;
-	*receive++ = *buf++;
-	*receive = *buf;
+	__IO u32	*spi_reg	= &SPI1->w0;
+	__IO u32	*buffer		= (__IO u32 *)buf;
+
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg++ = *buffer++;
+	*spi_reg = *buffer;
+}
+
+/******************************************************************************
+* Прочитать 16 слов из SPI в буфер
+******************************************************************************/
+inline void read_spi_to_buf (u32 *buf)
+{
+	__IO u32 *buffer = (__IO u32 *)buf;
+	__IO u32 *spi_reg = &SPI1->w0;
+
+	*buffer++ = *spi_reg++;	// записать данные из SPI в буфер
+	*buffer++ = *spi_reg++;
+	*buffer++ = *spi_reg++;
+	*buffer++ = *spi_reg++;
+	*buffer++ = *spi_reg++;
+	*buffer++ = *spi_reg++;
+	*buffer++ = *spi_reg++;
+	*buffer++ = *spi_reg++;
+	*buffer++ = *spi_reg++;
+	*buffer++ = *spi_reg++;
+	*buffer++ = *spi_reg++;
+	*buffer++ = *spi_reg++;
+	*buffer++ = *spi_reg++;
+	*buffer++ = *spi_reg++;
+	*buffer++ = *spi_reg++;
+	*buffer = *spi_reg;
+}
+
+/******************************************************************************
+* Задержка на 100 нс пустыми командами
+******************************************************************************/
+inline void wait_100_ns (void)
+{
+	__asm__ __volatile__ ("nop");	// 1/80 MHZ = 12.5 ns
+	__asm__ __volatile__ ("nop");
+	__asm__ __volatile__ ("nop");
+	__asm__ __volatile__ ("nop");
+	__asm__ __volatile__ ("nop");
+	__asm__ __volatile__ ("nop");
+	__asm__ __volatile__ ("nop");
+}
+
+/******************************************************************************
+* Задержка на 100 нс пустыми командами
+******************************************************************************/
+inline void ICACHE_FLASH_ATTR cashe_wait_100_ns (void)
+{
+	__asm__ __volatile__ ("nop");	// 1/80 MHZ = 12.5 ns
+	__asm__ __volatile__ ("nop");
+	__asm__ __volatile__ ("nop");
+	__asm__ __volatile__ ("nop");
+	__asm__ __volatile__ ("nop");
+	__asm__ __volatile__ ("nop");
+	__asm__ __volatile__ ("nop");
 }
 
 void ICACHE_FLASH_ATTR print_udata (u8 *buf, u32 len)

@@ -179,8 +179,8 @@ static void uart0_rx_intr_handler (void *para)
 	/* uart0 and uart1 intr combine togther, when interrupt occur, see reg 0x3ff20020, bit2, bit0 represents
 	 * uart1 and uart0 respectively
 	 */
-	RcvMsgBuff *pRxBuff = (RcvMsgBuff *)para;
-	uint8 RcvChar;
+	RcvMsgBuff	*pRxBuff = (RcvMsgBuff *)para;
+	uint8		RcvChar;
 
 	if (UART_0->int_st_bits.rx_fifo_full == 0)
 	{
@@ -196,8 +196,7 @@ static void uart0_rx_intr_handler (void *para)
 //		READ_PERI_REG (UART_FIFO (UART0)) & 0xFF;
 
 		/* you can add your handle code below.*/
-
-		* (pRxBuff->pWritePos) = RcvChar;
+		*(pRxBuff->pWritePos) = RcvChar;
 
 		// insert here for get one command line from uart
 		if (RcvChar == '\r')
